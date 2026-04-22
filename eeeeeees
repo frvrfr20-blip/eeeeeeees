@@ -39,7 +39,7 @@ local flowUIPalette = {
     Button = Color3.fromRGB(28, 32, 41),
     ButtonHover = Color3.fromRGB(38, 43, 54)
 }
-local flowUIBrandIconUrl = "https://raw.githubusercontent.com/frvrfr20-blip/eeeeeeees/refs/heads/main/ig_0957af0642c864c70169e909cb242c8191b137835618fe5fcb.png"
+local flowUIBrandIconUrl = "rbxassetid://122301554013809"
 
 local function resolveFlowUIFontEnum(weight)
     if weight == Enum.FontWeight.Bold then
