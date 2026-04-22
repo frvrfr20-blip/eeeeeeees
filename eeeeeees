@@ -39,6 +39,7 @@ local flowUIPalette = {
     Button = Color3.fromRGB(28, 32, 41),
     ButtonHover = Color3.fromRGB(38, 43, 54)
 }
+local flowUIBrandIconUrl = "https://raw.githubusercontent.com/frvrfr20-blip/eeeeeeees/refs/heads/main/ig_0957af0642c864c70169e909cb242c8191b137835618fe5fcb.png"
 
 local function resolveFlowUIFontEnum(weight)
     if weight == Enum.FontWeight.Bold then
@@ -1541,8 +1542,11 @@ function superMegaAwesomeLibrary:_RefreshMobileToggleVisuals(instant)
         and accent:Lerp(Color3.new(1, 1, 1), 0.12)
         or (isHovered and flowUIPalette.StrokeStrong or flowUIPalette.Stroke)
     local avatarStrokeColor = isOpen
-        and accent:Lerp(flowUIPalette.SurfaceSoft, 0.28)
+        and accent:Lerp(Color3.new(1, 1, 1), 0.18)
         or (isHovered and flowUIPalette.StrokeStrong or flowUIPalette.Stroke)
+    local avatarFrameColor = isOpen
+        and Color3.fromRGB(252, 252, 254)
+        or (isHovered and Color3.fromRGB(248, 249, 252) or Color3.fromRGB(242, 244, 248))
     local labelColor = isOpen
         and flowUIPalette.Text
         or (isHovered and flowUIPalette.TextMuted or getFlowUISubTextColor(self))
@@ -1560,7 +1564,7 @@ function superMegaAwesomeLibrary:_RefreshMobileToggleVisuals(instant)
             self.mobileToggleStroke.Color = strokeColor
         end
         if self.mobileToggleAvatarFrame then
-            self.mobileToggleAvatarFrame.BackgroundColor3 = isHovered and flowUIPalette.SurfaceSoft or flowUIPalette.SurfaceAlt
+            self.mobileToggleAvatarFrame.BackgroundColor3 = avatarFrameColor
         end
         if self.mobileToggleAvatarStroke then
             self.mobileToggleAvatarStroke.Color = avatarStrokeColor
@@ -1584,7 +1588,7 @@ function superMegaAwesomeLibrary:_RefreshMobileToggleVisuals(instant)
         smoothMoveGoWoosh(self.mobileToggleStroke, {Color = strokeColor}, 0.18)
     end
     if self.mobileToggleAvatarFrame then
-        smoothMoveGoWoosh(self.mobileToggleAvatarFrame, {BackgroundColor3 = isHovered and flowUIPalette.SurfaceSoft or flowUIPalette.SurfaceAlt}, 0.18)
+        smoothMoveGoWoosh(self.mobileToggleAvatarFrame, {BackgroundColor3 = avatarFrameColor}, 0.18)
     end
     if self.mobileToggleAvatarStroke then
         smoothMoveGoWoosh(self.mobileToggleAvatarStroke, {Color = avatarStrokeColor}, 0.18)
@@ -3728,7 +3732,7 @@ function superMegaAwesomeLibrary:CreateMobileToggleButton()
     
     self.mobileToggleAvatarFrame, self.mobileToggleAvatarStroke = makeFlowUISurfaceFrame(
         self.mobileToggleFrame,
-        flowUIPalette.SurfaceAlt,
+        Color3.fromRGB(242, 244, 248),
         UDim2.new(0, 7 * mobileScaleFactor, 0.5, -(avatarBubbleSize * 0.5)),
         UDim2.new(0, avatarBubbleSize, 0, avatarBubbleSize),
         {
@@ -3739,7 +3743,7 @@ function superMegaAwesomeLibrary:CreateMobileToggleButton()
     
     self.mobileToggleAvatarImg = makeThingExist("ImageLabel", {
         BackgroundTransparency = 1,
-        Image = getPlayerAvatarCuzTheyreBeautiful(theOneAndOnlyPlayer.UserId),
+        Image = flowUIBrandIconUrl,
         Position = UDim2.new(0.5, 0, 0.5, 0),
         AnchorPoint = Vector2.new(0.5, 0.5),
         Size = UDim2.new(0, avatarBubbleSize - (8 * mobileScaleFactor), 0, avatarBubbleSize - (8 * mobileScaleFactor)),
@@ -3815,7 +3819,7 @@ function superMegaAwesomeLibrary:CreateWatermarkBecauseWeCool()
     makeThingExist("UICorner", {CornerRadius = UDim.new(0, 7), Parent = self.watermarkFrame})
     
     makeThingExist("ImageLabel", {
-        Image = "rbxassetid://10723375250", BackgroundTransparency = 1,
+        Image = flowUIBrandIconUrl, BackgroundTransparency = 1,
         Position = UDim2.new(0, 11, 0.5, -7.5 * mobileScaleFactor),
         Size = UDim2.new(0, 15 * mobileScaleFactor, 0, 15 * mobileScaleFactor),
         Parent = self.watermarkFrame
