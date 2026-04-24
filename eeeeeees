@@ -20,6 +20,26 @@ local isMobileUserSadly = thisInputServiceGoesHard.TouchEnabled and not thisInpu
 local mobileScaleFactor = isMobileUserSadly and 0.7 or 1
 local defaultFlowUIFontEnum = Enum.Font.GothamSemibold
 local defaultFlowUIFontFamily = "rbxasset://fonts/families/GothamSSm.json"
+local flowUIPalette = {
+    Surface = Color3.fromRGB(15, 17, 24),
+    SurfaceAlt = Color3.fromRGB(19, 22, 30),
+    SurfaceSoft = Color3.fromRGB(24, 28, 38),
+    SurfaceHover = Color3.fromRGB(33, 37, 49),
+    SurfaceOverlay = Color3.fromRGB(17, 20, 28),
+    Stroke = Color3.fromRGB(44, 49, 64),
+    StrokeStrong = Color3.fromRGB(67, 74, 93),
+    Text = Color3.fromRGB(245, 247, 252),
+    TextMuted = Color3.fromRGB(136, 146, 168),
+    TextSoft = Color3.fromRGB(98, 109, 131),
+    FieldText = Color3.fromRGB(221, 226, 237),
+    FieldPlaceholder = Color3.fromRGB(98, 109, 132),
+    ToggleOff = Color3.fromRGB(40, 45, 57),
+    ToggleKnobOff = Color3.fromRGB(122, 130, 148),
+    SliderTrack = Color3.fromRGB(42, 47, 60),
+    Button = Color3.fromRGB(28, 32, 41),
+    ButtonHover = Color3.fromRGB(38, 43, 54)
+}
+local flowUIBrandIconUrl = "rbxthumb://type=Asset&id=122301554013809&w=420&h=420"
 
 local function resolveFlowUIFontEnum(weight)
     if weight == Enum.FontWeight.Bold then
@@ -95,6 +115,97 @@ local function makeThingExist(className, properties)
         whatWeJustMade.Parent = properties.Parent
     end
     return whatWeJustMade
+end
+
+local function applyFlowUIStrokeGradient(strokeRef)
+    return makeThingExist("UIGradient", {
+        Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, flowUIPalette.StrokeStrong),
+            ColorSequenceKeypoint.new(0.5, flowUIPalette.Stroke),
+            ColorSequenceKeypoint.new(1, Color3.fromRGB(58, 64, 82))
+        }),
+        Rotation = 260,
+        Parent = strokeRef
+    })
+end
+
+local function getFlowUITextColor(libraryRef)
+    if libraryRef and libraryRef.config and typeof(libraryRef.config.TextColor) == "Color3" then
+        return libraryRef.config.TextColor
+    end
+    return flowUIPalette.Text
+end
+
+local function getFlowUISubTextColor(libraryRef)
+    if libraryRef and libraryRef.config and typeof(libraryRef.config.SubTextColor) == "Color3" then
+        return libraryRef.config.SubTextColor
+    end
+    return flowUIPalette.TextMuted
+end
+
+local function makeFlowUISurfaceFrame(parent, backgroundColor, position, size, options)
+    options = options or {}
+    local frame = makeThingExist("Frame", {
+        BackgroundColor3 = backgroundColor or flowUIPalette.Surface,
+        BackgroundTransparency = options.BackgroundTransparency or 0,
+        BorderSizePixel = 0,
+        Position = position or UDim2.new(0, 0, 0, 0),
+        Size = size or UDim2.new(0, 0, 0, 0),
+        ClipsDescendants = options.ClipsDescendants == true,
+        ZIndex = options.ZIndex,
+        Parent = parent
+    })
+    if options.CornerRadius then
+        makeThingExist("UICorner", {CornerRadius = options.CornerRadius, Parent = frame})
+    end
+    local strokeThing = nil
+    if options.StrokeColor then
+        strokeThing = makeThingExist("UIStroke", {
+            Color = options.StrokeColor,
+            Thickness = options.StrokeThickness or 1,
+            Parent = frame
+        })
+        if options.StrokeGradient then
+            applyFlowUIStrokeGradient(strokeThing)
+        end
+    end
+    return frame, strokeThing
+end
+
+local function makeFlowUILabel(parent, libraryRef, text, position, size, options)
+    options = options or {}
+    return makeThingExist("TextLabel", {
+        FontFace = options.FontFace or Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.SemiBold),
+        TextColor3 = options.TextColor or getFlowUISubTextColor(libraryRef),
+        Text = text or "",
+        BackgroundTransparency = 1,
+        Position = position or UDim2.new(0, 0, 0, 0),
+        Size = size or UDim2.new(0, 0, 0, 0),
+        TextSize = options.TextSize or (14 * mobileScaleFactor),
+        TextXAlignment = options.TextXAlignment or Enum.TextXAlignment.Left,
+        TextYAlignment = options.TextYAlignment,
+        TextTruncate = options.TextTruncate,
+        TextWrapped = options.TextWrapped == true,
+        ClipsDescendants = options.ClipsDescendants == true,
+        ZIndex = options.ZIndex,
+        AnchorPoint = options.AnchorPoint,
+        Parent = parent
+    })
+end
+
+local function makeFlowUIIcon(parent, image, color, position, size, options)
+    options = options or {}
+    return makeThingExist("ImageLabel", {
+        Image = image,
+        ImageColor3 = color or flowUIPalette.TextMuted,
+        ImageTransparency = options.ImageTransparency,
+        BackgroundTransparency = 1,
+        Position = position or UDim2.new(0, 0, 0, 0),
+        Size = size or UDim2.new(0, 0, 0, 0),
+        AnchorPoint = options.AnchorPoint,
+        ZIndex = options.ZIndex,
+        Parent = parent
+    })
 end
 
 local function smoothMoveGoWoosh(instance, properties, duration, easingStyle, easingDirection)
@@ -1398,7 +1509,7 @@ function superMegaAwesomeLibrary:_RefreshAccentCore()
         self.uiAccentPreviewFrame.BackgroundColor3 = accent
     end
     if self.uiSettingsButtonStroke then
-        self.uiSettingsButtonStroke.Color = self.uiSettingsOpen and accent:Lerp(Color3.fromRGB(20, 20, 20), 0.45) or Color3.fromRGB(45, 45, 45)
+        self.uiSettingsButtonStroke.Color = self.uiSettingsOpen and accent:Lerp(flowUIPalette.Surface, 0.42) or flowUIPalette.Stroke
     end
     if self.currentTabYay and self.currentTabYay.buttonFrame then
         self.currentTabYay.buttonFrame.BackgroundColor3 = accent
@@ -1413,6 +1524,90 @@ function superMegaAwesomeLibrary:_RefreshAccentCore()
         end
     end
     self:_SetTextGradientEnabled(self._uiVisualSettings.TextGradient)
+    self:_RefreshMobileToggleVisuals(true)
+end
+
+function superMegaAwesomeLibrary:_RefreshMobileToggleVisuals(instant)
+    if not self.mobileToggleFrame then
+        return
+    end
+
+    local accent = self.config.AccentColor or flowUIPalette.Text
+    local isOpen = self.isToggledOn == true
+    local isHovered = self.mobileToggleHovered == true
+    local frameColor = isOpen
+        and flowUIPalette.SurfaceSoft:Lerp(accent, isHovered and 0.18 or 0.12)
+        or (isHovered and flowUIPalette.SurfaceSoft or flowUIPalette.Surface)
+    local strokeColor = isOpen
+        and accent:Lerp(flowUIPalette.StrokeStrong, isHovered and 0.22 or 0.34)
+        or (isHovered and flowUIPalette.StrokeStrong or flowUIPalette.Stroke)
+    local avatarStrokeColor = isOpen
+        and accent:Lerp(Color3.new(1, 1, 1), isHovered and 0.1 or 0.18)
+        or (isHovered and flowUIPalette.StrokeStrong or flowUIPalette.Stroke)
+    local avatarFrameColor = isOpen
+        and flowUIPalette.Surface
+        or (isHovered and flowUIPalette.SurfaceHover or flowUIPalette.SurfaceSoft)
+    local labelColor = isOpen
+        and flowUIPalette.Text
+        or (isHovered and flowUIPalette.TextMuted or getFlowUISubTextColor(self))
+    local dotColor = isOpen and accent or (isHovered and flowUIPalette.TextMuted or flowUIPalette.TextSoft)
+    local dotSize = isOpen and (10 * mobileScaleFactor) or (8 * mobileScaleFactor)
+    local glowTransparency = isOpen and (isHovered and 0.86 or 0.9) or (isHovered and 0.91 or 0.94)
+
+    if self.mobileToggleStateLabel then
+        self.mobileToggleStateLabel.Text = isOpen and "Hide" or "Open"
+    end
+
+    if instant then
+        self.mobileToggleFrame.BackgroundColor3 = frameColor
+        if self.mobileToggleStroke then
+            self.mobileToggleStroke.Color = strokeColor
+        end
+        if self.mobileToggleAvatarFrame then
+            self.mobileToggleAvatarFrame.BackgroundColor3 = avatarFrameColor
+        end
+        if self.mobileToggleAvatarStroke then
+            self.mobileToggleAvatarStroke.Color = avatarStrokeColor
+        end
+        if self.mobileToggleStateLabel then
+            self.mobileToggleStateLabel.TextColor3 = labelColor
+        end
+        if self.mobileToggleStateDot then
+            self.mobileToggleStateDot.BackgroundColor3 = dotColor
+            self.mobileToggleStateDot.Size = UDim2.new(0, dotSize, 0, dotSize)
+        end
+        if self.mobileToggleGlow then
+            self.mobileToggleGlow.ImageColor3 = accent
+            self.mobileToggleGlow.ImageTransparency = glowTransparency
+        end
+        return
+    end
+
+    smoothMoveGoWoosh(self.mobileToggleFrame, {BackgroundColor3 = frameColor}, 0.18)
+    if self.mobileToggleStroke then
+        smoothMoveGoWoosh(self.mobileToggleStroke, {Color = strokeColor}, 0.18)
+    end
+    if self.mobileToggleAvatarFrame then
+        smoothMoveGoWoosh(self.mobileToggleAvatarFrame, {BackgroundColor3 = avatarFrameColor}, 0.18)
+    end
+    if self.mobileToggleAvatarStroke then
+        smoothMoveGoWoosh(self.mobileToggleAvatarStroke, {Color = avatarStrokeColor}, 0.18)
+    end
+    if self.mobileToggleStateLabel then
+        smoothMoveGoWoosh(self.mobileToggleStateLabel, {TextColor3 = labelColor}, 0.18)
+    end
+    if self.mobileToggleStateDot then
+        smoothMoveGoWoosh(self.mobileToggleStateDot, {
+            BackgroundColor3 = dotColor,
+            Size = UDim2.new(0, dotSize, 0, dotSize)
+        }, 0.18)
+    end
+    if self.mobileToggleGlow then
+        smoothMoveGoWoosh(self.mobileToggleGlow, {
+            ImageColor3 = accent,
+            ImageTransparency = glowTransparency
+        }, 0.18)
+    end
 end
 
 function superMegaAwesomeLibrary:_ApplyOpenCloseVisuals(instant)
@@ -1435,6 +1630,7 @@ function superMegaAwesomeLibrary:_ApplyOpenCloseVisuals(instant)
         self._snowSpawnAccumulator = 0
         self:_ClearSnowflakes()
     end
+    self:_RefreshMobileToggleVisuals(instant)
     self:_UpdateESPPreview(0)
 end
 
@@ -3503,62 +3699,71 @@ function superMegaAwesomeLibrary:SetToggleKey(keyCode)
 end
 
 function superMegaAwesomeLibrary:CreateMobileToggleButton()
-    local buttonSize = 48 * mobileScaleFactor
+    local toggleScale = isMobileUserSadly and 1 or mobileScaleFactor
+    local buttonWidth = 50 * toggleScale
+    local buttonHeight = 50 * toggleScale
+    local avatarBubbleSize = 34 * toggleScale
+    local avatarIconSize = 24 * toggleScale
     
-    self.mobileToggleFrame = makeThingExist("Frame", {
-        Name = "MobileToggleButton",
-        BackgroundColor3 = Color3.fromRGB(16, 16, 16),
-        Position = UDim2.new(0.5, -buttonSize/2, 0, 10),
-        BorderColor3 = Color3.new(),
-        BorderSizePixel = 0,
-        Size = UDim2.new(0, buttonSize, 0, buttonSize),
-        Parent = self.screenGuiYay
-    })
+    self.mobileToggleFrame, self.mobileToggleStroke = makeFlowUISurfaceFrame(
+        self.screenGuiYay,
+        flowUIPalette.Surface,
+        UDim2.new(0.5, 0, 0, 8 * toggleScale),
+        UDim2.new(0, buttonWidth, 0, buttonHeight),
+        {
+            CornerRadius = UDim.new(0, 14 * toggleScale),
+            StrokeColor = flowUIPalette.Stroke,
+            StrokeGradient = true
+        }
+    )
+    self.mobileToggleFrame.Name = "MobileToggleButton"
+    self.mobileToggleFrame.AnchorPoint = Vector2.new(0.5, 0)
     
-    makeThingExist("UICorner", {
-        CornerRadius = UDim.new(0, 10),
-        Parent = self.mobileToggleFrame
-    })
-    
-    local mobileStroke = makeThingExist("UIStroke", {
-        Color = Color3.fromRGB(40, 40, 40),
-        Thickness = 1.5,
-        Parent = self.mobileToggleFrame
-    })
-    
-    makeThingExist("UIGradient", {
-        Color = ColorSequence.new({
-            ColorSequenceKeypoint.new(0, Color3.new(1, 1, 1)),
-            ColorSequenceKeypoint.new(0.5, Color3.fromRGB(150, 150, 150)),
-            ColorSequenceKeypoint.new(1, Color3.new(1, 1, 1))
-        }),
-        Rotation = 45,
-        Parent = mobileStroke
-    })
-    
-    self.mobileToggleIcon = makeThingExist("ImageLabel", {
-        Name = "ToggleIcon",
-        BackgroundTransparency = 1,
-        Image = "rbxassetid://95109736896642",
-        ImageColor3 = self.config.AccentColor,
-        Position = UDim2.new(0.5, 0, 0.5, 0),
-        AnchorPoint = Vector2.new(0.5, 0.5),
-        Size = UDim2.new(0, 28 * mobileScaleFactor, 0, 28 * mobileScaleFactor),
-        Parent = self.mobileToggleFrame
-    })
-    
-    local glowEffect = makeThingExist("ImageLabel", {
+    self.mobileToggleGlow = makeThingExist("ImageLabel", {
         Name = "GlowEffect",
         BackgroundTransparency = 1,
         Image = "rbxassetid://5028857084",
         ImageColor3 = self.config.AccentColor,
-        ImageTransparency = 0.7,
+        ImageTransparency = 0.94,
         Position = UDim2.new(0.5, 0, 0.5, 0),
         AnchorPoint = Vector2.new(0.5, 0.5),
-        Size = UDim2.new(1.8, 0, 1.8, 0),
+        Size = UDim2.new(1.45, 0, 1.45, 0),
         ZIndex = 0,
         Parent = self.mobileToggleFrame
     })
+    
+    self.mobileToggleAvatarFrame, self.mobileToggleAvatarStroke = makeFlowUISurfaceFrame(
+        self.mobileToggleFrame,
+        flowUIPalette.SurfaceSoft,
+        UDim2.new(0.5, -(avatarBubbleSize * 0.5), 0.5, -(avatarBubbleSize * 0.5)),
+        UDim2.new(0, avatarBubbleSize, 0, avatarBubbleSize),
+        {
+            CornerRadius = UDim.new(0, 10 * toggleScale),
+            StrokeColor = flowUIPalette.StrokeStrong
+        }
+    )
+    
+    self.mobileToggleAvatarImg = makeThingExist("ImageLabel", {
+        BackgroundTransparency = 1,
+        Image = flowUIBrandIconUrl,
+        Position = UDim2.new(0.5, 0, 0.5, 0),
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        Size = UDim2.new(0, avatarIconSize, 0, avatarIconSize),
+        Parent = self.mobileToggleAvatarFrame
+    })
+    makeThingExist("UICorner", {CornerRadius = UDim.new(0, 7 * toggleScale), Parent = self.mobileToggleAvatarImg})
+    
+    self.mobileToggleStateLabel = nil
+    
+    self.mobileToggleStateDot = makeThingExist("Frame", {
+        BackgroundColor3 = self.config.AccentColor,
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        Position = UDim2.new(1, -9 * toggleScale, 1, -9 * toggleScale),
+        Size = UDim2.new(0, 7 * toggleScale, 0, 7 * toggleScale),
+        BorderSizePixel = 0,
+        Parent = self.mobileToggleFrame
+    })
+    makeThingExist("UICorner", {CornerRadius = UDim.new(1, 0), Parent = self.mobileToggleStateDot})
     
     local mobileToggleBtn = makeThingExist("TextButton", {
         Name = "ClickButton",
@@ -3570,23 +3775,23 @@ function superMegaAwesomeLibrary:CreateMobileToggleButton()
     
     mobileToggleBtn.MouseButton1Click:Connect(function()
         self:ToggleUI()
-        
-        smoothMoveGoWoosh(self.mobileToggleIcon, {Size = UDim2.new(0, 24 * mobileScaleFactor, 0, 24 * mobileScaleFactor)}, 0.1)
+        smoothMoveGoWoosh(self.mobileToggleFrame, {Size = UDim2.new(0, buttonWidth - (4 * mobileScaleFactor), 0, buttonHeight - (4 * mobileScaleFactor))}, 0.08)
         task.delay(0.1, function()
-            smoothMoveGoWoosh(self.mobileToggleIcon, {Size = UDim2.new(0, 28 * mobileScaleFactor, 0, 28 * mobileScaleFactor)}, 0.15, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+            smoothMoveGoWoosh(self.mobileToggleFrame, {Size = UDim2.new(0, buttonWidth, 0, buttonHeight)}, 0.16, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
         end)
     end)
     
     mobileToggleBtn.MouseEnter:Connect(function()
-        smoothMoveGoWoosh(self.mobileToggleFrame, {BackgroundColor3 = Color3.fromRGB(24, 24, 24)}, 0.2)
-        smoothMoveGoWoosh(glowEffect, {ImageTransparency = 0.5}, 0.2)
+        self.mobileToggleHovered = true
+        self:_RefreshMobileToggleVisuals(false)
     end)
     
     mobileToggleBtn.MouseLeave:Connect(function()
-        smoothMoveGoWoosh(self.mobileToggleFrame, {BackgroundColor3 = Color3.fromRGB(16, 16, 16)}, 0.2)
-        smoothMoveGoWoosh(glowEffect, {ImageTransparency = 0.7}, 0.2)
+        self.mobileToggleHovered = false
+        self:_RefreshMobileToggleVisuals(false)
     end)
     
+    self:_RefreshMobileToggleVisuals(true)
     makeDraggableCuzWeCan(self.mobileToggleFrame, nil, self)
 end
 
@@ -3606,7 +3811,7 @@ function superMegaAwesomeLibrary:CreateWatermarkBecauseWeCool()
     makeThingExist("UICorner", {CornerRadius = UDim.new(0, 7), Parent = self.watermarkFrame})
     
     makeThingExist("ImageLabel", {
-        Image = "rbxassetid://10723375250", BackgroundTransparency = 1,
+        Image = flowUIBrandIconUrl, BackgroundTransparency = 1,
         Position = UDim2.new(0, 11, 0.5, -7.5 * mobileScaleFactor),
         Size = UDim2.new(0, 15 * mobileScaleFactor, 0, 15 * mobileScaleFactor),
         Parent = self.watermarkFrame
@@ -3654,32 +3859,33 @@ function superMegaAwesomeLibrary:CreateMainFrameYay()
     local frameHeight = 530 * mobileScaleFactor
     local headerLeftPadding = 10 * mobileScaleFactor
     local headerAvatarBaseX = 160 * mobileScaleFactor
-    local headerAvatarSize = 30 * mobileScaleFactor
-    local headerAvatarGap = 10 * mobileScaleFactor
+    local headerAvatarSize = 40 * mobileScaleFactor
+    local headerAvatarGap = 12 * mobileScaleFactor
+    local headerAvatarImageSize = headerAvatarSize - (6 * mobileScaleFactor)
     local searchWidth = 214 * mobileScaleFactor
     local searchRightPadding = 12 * mobileScaleFactor
     local contentStartX = 198 * mobileScaleFactor
     local contentRightPadding = 7 * mobileScaleFactor
-    local sectionScrollHeight = 441 * mobileScaleFactor
+    local sectionScrollHeight = math.max(260 * mobileScaleFactor, frameHeight - (75 * mobileScaleFactor) - (58 * mobileScaleFactor))
     local contentHeight = 461 * mobileScaleFactor
     self._mainFrameOpenPosition = UDim2.new(0.5, -frameWidth/2, 0.5, -frameHeight/2)
     self._mainFrameClosedPosition = UDim2.new(0.5, -frameWidth/2, 1.5, 0)
     
     self.mainFrameYay = makeThingExist("Frame", {
         Name = "MainFrameIsAwesome",
-        BackgroundColor3 = Color3.fromRGB(16, 16, 16),
+        BackgroundColor3 = self.config.BackgroundColor or flowUIPalette.Surface,
         Position = self._mainFrameOpenPosition,
         BorderSizePixel = 0,
         Size = UDim2.new(0, frameWidth, 0, frameHeight),
         Parent = self.screenGuiYay
     })
     
-    makeThingExist("UICorner", {CornerRadius = UDim.new(0, 10), Parent = self.mainFrameYay})
+    makeThingExist("UICorner", {CornerRadius = UDim.new(0, 12), Parent = self.mainFrameYay})
 
     self.mainBackgroundEffectsFrame = makeThingExist("Frame", {
         Name = "MainBackgroundEffects",
-        BackgroundColor3 = Color3.fromRGB(18, 18, 18),
-        BackgroundTransparency = 0.45,
+        BackgroundColor3 = self.config.SecondaryColor or flowUIPalette.SurfaceAlt,
+        BackgroundTransparency = 0.36,
         Size = UDim2.new(1, 0, 1, 0),
         ClipsDescendants = true,
         ZIndex = 0,
@@ -3687,11 +3893,11 @@ function superMegaAwesomeLibrary:CreateMainFrameYay()
     })
     self.mainBackgroundGradient = makeThingExist("UIGradient", {
         Color = ColorSequence.new({
-            ColorSequenceKeypoint.new(0, Color3.fromRGB(10, 10, 10)),
-            ColorSequenceKeypoint.new(0.5, Color3.fromRGB(18, 18, 18)),
-            ColorSequenceKeypoint.new(1, Color3.fromRGB(12, 12, 12))
+            ColorSequenceKeypoint.new(0, Color3.fromRGB(12, 14, 20)),
+            ColorSequenceKeypoint.new(0.52, Color3.fromRGB(21, 25, 35)),
+            ColorSequenceKeypoint.new(1, Color3.fromRGB(14, 17, 24))
         }),
-        Rotation = 210,
+        Rotation = 215,
         Parent = self.mainBackgroundEffectsFrame
     })
     self.mainBackgroundAccentGlow = makeThingExist("ImageLabel", {
@@ -3699,8 +3905,8 @@ function superMegaAwesomeLibrary:CreateMainFrameYay()
         BackgroundTransparency = 1,
         Image = "rbxassetid://5028857084",
         ImageColor3 = self.config.AccentColor,
-        ImageTransparency = 0.9,
-        Size = UDim2.new(1.8, 0, 1.8, 0),
+        ImageTransparency = 0.93,
+        Size = UDim2.new(1.65, 0, 1.65, 0),
         Position = UDim2.new(0.5, 0, 0.5, 0),
         AnchorPoint = Vector2.new(0.5, 0.5),
         ZIndex = 0,
@@ -3725,10 +3931,12 @@ function superMegaAwesomeLibrary:CreateMainFrameYay()
     local tabHeaderX = math.max(201 * mobileScaleFactor, avatarRight + 18 * mobileScaleFactor)
     local separatorWidth = math.max(156 * mobileScaleFactor, avatarRight - 19 * mobileScaleFactor)
     local contentWidth = frameWidth - contentStartX - contentRightPadding
+    local mainTextColor = self.config.TextColor or flowUIPalette.Text
+    local subTextColor = self.config.SubTextColor or flowUIPalette.TextMuted
     
     self.hubNameLabel = makeThingExist("TextLabel", {
         FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.SemiBold),
-        TextColor3 = Color3.new(1, 1, 1), Text = self.config.Name, BackgroundTransparency = 1,
+        TextColor3 = mainTextColor, Text = self.config.Name, BackgroundTransparency = 1,
         Position = UDim2.new(0, headerLeftPadding, 0, 14 * mobileScaleFactor), TextSize = 17 * mobileScaleFactor,
         Size = UDim2.new(0, headerNameMaxWidth, 0, 20 * mobileScaleFactor),
         TextTruncate = Enum.TextTruncate.AtEnd, TextXAlignment = Enum.TextXAlignment.Left, Parent = self.mainFrameYay
@@ -3738,7 +3946,7 @@ function superMegaAwesomeLibrary:CreateMainFrameYay()
     local playerName = "@" .. theOneAndOnlyPlayer.Name
     self.userNameLabel = makeThingExist("TextLabel", {
         FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.SemiBold),
-        TextColor3 = Color3.fromRGB(46, 46, 46), Text = playerName, BackgroundTransparency = 1,
+        TextColor3 = subTextColor, Text = playerName, BackgroundTransparency = 1,
         Position = UDim2.new(0, headerLeftPadding, 0, 34 * mobileScaleFactor), TextSize = 14 * mobileScaleFactor,
         Size = UDim2.new(0, 120 * mobileScaleFactor, 0, 18 * mobileScaleFactor),
         TextXAlignment = Enum.TextXAlignment.Left, TextTruncate = Enum.TextTruncate.AtEnd,
@@ -3746,22 +3954,37 @@ function superMegaAwesomeLibrary:CreateMainFrameYay()
     })
     self:_SetNameHidden(self._uiVisualSettings.HideName)
     
+    self.playerAvatarFrame, self.playerAvatarFrameStroke = makeFlowUISurfaceFrame(
+        self.mainFrameYay,
+        flowUIPalette.SurfaceSoft:Lerp(self.config.AccentColor or flowUIPalette.Text, 0.08),
+        UDim2.new(0, avatarX, 0, 12 * mobileScaleFactor),
+        UDim2.new(0, headerAvatarSize, 0, headerAvatarSize),
+        {
+            CornerRadius = UDim.new(1, 0),
+            StrokeColor = (self.config.AccentColor or flowUIPalette.StrokeStrong):Lerp(flowUIPalette.StrokeStrong, 0.58),
+            StrokeThickness = 1.15
+        }
+    )
     self.playerAvatarImg = makeThingExist("ImageLabel", {
-        Image = getPlayerAvatarCuzTheyreBeautiful(theOneAndOnlyPlayer.UserId), BackgroundTransparency = 1,
-        Position = UDim2.new(0, avatarX, 0, 17 * mobileScaleFactor),
-        Size = UDim2.new(0, headerAvatarSize, 0, headerAvatarSize), Parent = self.mainFrameYay
+        Image = getPlayerAvatarCuzTheyreBeautiful(theOneAndOnlyPlayer.UserId),
+        BackgroundTransparency = 1,
+        Position = UDim2.new(0.5, 0, 0.5, 0),
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        Size = UDim2.new(0, headerAvatarImageSize, 0, headerAvatarImageSize),
+        ScaleType = Enum.ScaleType.Crop,
+        Parent = self.playerAvatarFrame
     })
     makeThingExist("UICorner", {CornerRadius = UDim.new(1, 0), Parent = self.playerAvatarImg})
     
     self.lineSeperator = makeThingExist("Frame", {
-        BackgroundColor3 = Color3.fromRGB(36, 36, 36),
+        BackgroundColor3 = flowUIPalette.Stroke,
         Position = UDim2.new(0, 19, 0, 64 * mobileScaleFactor),
         Size = UDim2.new(0, separatorWidth, 0, 1), Parent = self.mainFrameYay
     })
     
     self.tabNameLabel = makeThingExist("TextLabel", {
         FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.SemiBold),
-        TextColor3 = Color3.new(1, 1, 1), Text = "tab name", BackgroundTransparency = 1,
+        TextColor3 = mainTextColor, Text = "tab name", BackgroundTransparency = 1,
         Position = UDim2.new(0, tabHeaderX, 0, 14 * mobileScaleFactor),
         TextSize = 17 * mobileScaleFactor, Size = UDim2.new(0, 78, 0, 20 * mobileScaleFactor),
         TextXAlignment = Enum.TextXAlignment.Left, Parent = self.mainFrameYay
@@ -3770,23 +3993,23 @@ function superMegaAwesomeLibrary:CreateMainFrameYay()
     
     self.tabDescriptionLabel = makeThingExist("TextLabel", {
         FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.SemiBold),
-        TextColor3 = Color3.fromRGB(46, 46, 46), Text = "tab description", BackgroundTransparency = 1,
+        TextColor3 = subTextColor, Text = "tab description", BackgroundTransparency = 1,
         Position = UDim2.new(0, tabHeaderX, 0, 34 * mobileScaleFactor),
         TextSize = 14 * mobileScaleFactor, Size = UDim2.new(0, 200, 0, 18 * mobileScaleFactor),
         TextXAlignment = Enum.TextXAlignment.Left, Parent = self.mainFrameYay
     })
 
     self.searchFrame = makeThingExist("Frame", {
-        BackgroundColor3 = Color3.fromRGB(22, 22, 22),
+        BackgroundColor3 = flowUIPalette.SurfaceSoft,
         Position = UDim2.new(0, searchX, 0, 16 * mobileScaleFactor),
         Size = UDim2.new(0, searchWidth, 0, 28 * mobileScaleFactor),
         Parent = self.mainFrameYay
     })
     makeThingExist("UICorner", {CornerRadius = UDim.new(1, 0), Parent = self.searchFrame})
-    makeThingExist("UIStroke", {Color = Color3.fromRGB(38, 38, 38), Parent = self.searchFrame})
+    makeThingExist("UIStroke", {Color = flowUIPalette.Stroke, Parent = self.searchFrame})
     makeThingExist("ImageLabel", {
         Image = "rbxassetid://10734943674",
-        ImageColor3 = Color3.fromRGB(120, 120, 120),
+        ImageColor3 = flowUIPalette.TextMuted,
         BackgroundTransparency = 1,
         Position = UDim2.new(0, 8, 0.5, -7 * mobileScaleFactor),
         Size = UDim2.new(0, 14 * mobileScaleFactor, 0, 14 * mobileScaleFactor),
@@ -3796,8 +4019,8 @@ function superMegaAwesomeLibrary:CreateMainFrameYay()
         FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.SemiBold),
         Text = "",
         PlaceholderText = "Search tabs/groups...",
-        PlaceholderColor3 = Color3.fromRGB(80, 80, 80),
-        TextColor3 = Color3.fromRGB(210, 210, 210),
+        PlaceholderColor3 = flowUIPalette.FieldPlaceholder,
+        TextColor3 = flowUIPalette.FieldText,
         TextSize = 13 * mobileScaleFactor,
         BackgroundTransparency = 1,
         ClearTextOnFocus = false,
@@ -3814,7 +4037,7 @@ function superMegaAwesomeLibrary:CreateMainFrameYay()
         BackgroundTransparency = 1, Position = UDim2.new(0, 17, 0, 75 * mobileScaleFactor),
         Size = UDim2.new(0, 162 * mobileScaleFactor, 0, sectionScrollHeight),
         ScrollBarThickness = 0, CanvasSize = UDim2.new(0, 0, 0, 0),
-        AutomaticCanvasSize = Enum.AutomaticSize.Y, ClipsDescendants = true, Parent = self.mainFrameYay
+        AutomaticCanvasSize = Enum.AutomaticSize.Y, ClipsDescendants = true, ZIndex = 3, Parent = self.mainFrameYay
     })
     attachFlowUIScrollbar(self, self.sectionHolderScroll, self.mainFrameYay, {
         TrackWidth = 7 * mobileScaleFactor,
@@ -3824,7 +4047,13 @@ function superMegaAwesomeLibrary:CreateMainFrameYay()
         ZIndex = 6
     })
     
-    makeThingExist("UIPadding", {PaddingLeft = UDim.new(0, 2), PaddingRight = UDim.new(0, 2), PaddingTop = UDim.new(0, 2), Parent = self.sectionHolderScroll})
+    makeThingExist("UIPadding", {
+        PaddingLeft = UDim.new(0, 2),
+        PaddingRight = UDim.new(0, 2),
+        PaddingTop = UDim.new(0, 2),
+        PaddingBottom = UDim.new(0, 8 * mobileScaleFactor),
+        Parent = self.sectionHolderScroll
+    })
     self.sectionLayoutThing = makeThingExist("UIListLayout", {Padding = UDim.new(0, 10), SortOrder = Enum.SortOrder.LayoutOrder, Parent = self.sectionHolderScroll})
     --self:EnableSmoothScrolling(self.sectionHolderScroll, 34)
     
@@ -3839,27 +4068,28 @@ function superMegaAwesomeLibrary:CreateMainFrameYay()
     self.uiSettingsOpen = false
 
     self.uiSettingsButtonFrame = makeThingExist("Frame", {
-        BackgroundColor3 = Color3.fromRGB(20, 20, 20),
+        BackgroundColor3 = flowUIPalette.SurfaceSoft,
         Position = UDim2.new(0, 10, 1, -31 * mobileScaleFactor),
         Size = UDim2.new(0, 116 * mobileScaleFactor, 0, 22 * mobileScaleFactor),
         BorderSizePixel = 0,
+        ZIndex = 12,
         Parent = self.mainFrameYay
     })
     makeThingExist("UICorner", {CornerRadius = UDim.new(1, 0), Parent = self.uiSettingsButtonFrame})
-    self.uiSettingsButtonStroke = makeThingExist("UIStroke", {Color = Color3.fromRGB(45, 45, 45), Parent = self.uiSettingsButtonFrame})
+    self.uiSettingsButtonStroke = makeThingExist("UIStroke", {Color = flowUIPalette.Stroke, Parent = self.uiSettingsButtonFrame})
 
     makeThingExist("ImageLabel", {
         Image = "rbxassetid://6031280882",
         BackgroundTransparency = 1,
         Position = UDim2.new(0, 7, 0.5, -6 * mobileScaleFactor),
         Size = UDim2.new(0, 12 * mobileScaleFactor, 0, 12 * mobileScaleFactor),
-        ImageColor3 = Color3.fromRGB(165, 165, 165),
+        ImageColor3 = flowUIPalette.TextMuted,
         Parent = self.uiSettingsButtonFrame
     })
     makeThingExist("TextLabel", {
         FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.SemiBold),
         Text = "UI Settings",
-        TextColor3 = Color3.fromRGB(185, 185, 185),
+        TextColor3 = flowUIPalette.TextMuted,
         BackgroundTransparency = 1,
         Position = UDim2.new(0, 24 * mobileScaleFactor, 0, 0),
         Size = UDim2.new(1, -28 * mobileScaleFactor, 1, 0),
@@ -3881,6 +4111,7 @@ function superMegaAwesomeLibrary:CreateMainFrameYay()
         Size = UDim2.new(0, settingsPanelWidth, 0, 0),
         ClipsDescendants = true,
         Visible = false,
+        ZIndex = 40,
         Parent = self.mainFrameYay
     })
     makeThingExist("UICorner", {CornerRadius = UDim.new(0, 8), Parent = self.uiSettingsPanelFrame})
@@ -4609,31 +4840,37 @@ function superMegaAwesomeLibrary:CreateSection(config)
         ClipsDescendants = true, Parent = self.sectionHolderScroll
     })
     
-    sectionObj.mainFrame = makeThingExist("Frame", {
-        BackgroundColor3 = Color3.fromRGB(18, 18, 18), Position = UDim2.new(0, 1, 0, 2),
-        Size = UDim2.new(0, 158 * mobileScaleFactor, 0, 30 * mobileScaleFactor), Parent = sectionObj.containerFrame
-    })
+    sectionObj.mainFrame = makeFlowUISurfaceFrame(
+        sectionObj.containerFrame,
+        flowUIPalette.Surface,
+        UDim2.new(0, 1, 0, 2),
+        UDim2.new(0, 158 * mobileScaleFactor, 0, 30 * mobileScaleFactor),
+        {
+            CornerRadius = UDim.new(0, 8),
+            StrokeColor = flowUIPalette.Stroke,
+            StrokeGradient = true
+        }
+    )
     
-    local strokeThing = makeThingExist("UIStroke", {Color = Color3.fromRGB(33, 33, 33), Parent = sectionObj.mainFrame})
-    makeThingExist("UIGradient", {
-        Color = ColorSequence.new({ColorSequenceKeypoint.new(0, Color3.new(1,1,1)), ColorSequenceKeypoint.new(0.5, Color3.fromRGB(150,150,150)), ColorSequenceKeypoint.new(1, Color3.new(1,1,1))}),
-        Rotation = 260, Parent = strokeThing
-    })
-    makeThingExist("UICorner", {CornerRadius = UDim.new(0, 7), Parent = sectionObj.mainFrame})
+    makeFlowUIIcon(
+        sectionObj.mainFrame,
+        config.Icon,
+        getFlowUISubTextColor(sectionObj.Library),
+        UDim2.new(0, 10, 0.5, -7.5 * mobileScaleFactor),
+        UDim2.new(0, 15 * mobileScaleFactor, 0, 15 * mobileScaleFactor)
+    )
     
-    makeThingExist("ImageLabel", {
-        Image = config.Icon, BackgroundTransparency = 1,
-        Position = UDim2.new(0, 10, 0.5, -7.5 * mobileScaleFactor),
-        Size = UDim2.new(0, 15 * mobileScaleFactor, 0, 15 * mobileScaleFactor), Parent = sectionObj.mainFrame
-    })
-    
-    makeThingExist("TextLabel", {
-        FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.SemiBold),
-        TextColor3 = Color3.new(1, 1, 1), Text = config.Name, BackgroundTransparency = 1,
-        Position = UDim2.new(0, 33, 0.5, -9 * mobileScaleFactor), TextSize = 15.5 * mobileScaleFactor,
-        Size = UDim2.new(0, 84, 0, 18 * mobileScaleFactor), TextXAlignment = Enum.TextXAlignment.Left,
-        Parent = sectionObj.mainFrame
-    })
+    makeFlowUILabel(
+        sectionObj.mainFrame,
+        sectionObj.Library,
+        config.Name,
+        UDim2.new(0, 33, 0.5, -9 * mobileScaleFactor),
+        UDim2.new(0, 84, 0, 18 * mobileScaleFactor),
+        {
+            TextColor = getFlowUITextColor(sectionObj.Library),
+            TextSize = 15.5 * mobileScaleFactor
+        }
+    )
     
     local expandButtonImg = makeThingExist("ImageButton", {
         Image = "rbxassetid://111626678408582", BackgroundTransparency = 1,
@@ -4684,26 +4921,39 @@ function superMegaAwesomeLibrary:CreateSection(config)
         tabObj.Library = sectionObj.Library
         tabObj.defaultButtonSize = UDim2.new(0, 140 * mobileScaleFactor, 0, 31 * mobileScaleFactor)
         
-        tabObj.buttonFrame = makeThingExist("Frame", {
-            BackgroundColor3 = sectionObj.Library.config.AccentColor, BackgroundTransparency = 1,
-            Size = tabObj.defaultButtonSize, ClipsDescendants = true, Parent = sectionObj.tabHolderFrame
-        })
-        makeThingExist("UICorner", {CornerRadius = UDim.new(0, 7), Parent = tabObj.buttonFrame})
+        tabObj.buttonFrame = makeFlowUISurfaceFrame(
+            sectionObj.tabHolderFrame,
+            flowUIPalette.SurfaceSoft,
+            UDim2.new(0, 0, 0, 0),
+            tabObj.defaultButtonSize,
+            {
+                BackgroundTransparency = 0.38,
+                ClipsDescendants = true,
+                CornerRadius = UDim.new(0, 8)
+            }
+        )
         
-        tabObj.iconImg = makeThingExist("ImageLabel", {
-            ImageColor3 = Color3.fromRGB(89, 89, 89), Image = tabConfig.Icon, BackgroundTransparency = 1,
-            Position = UDim2.new(0, 10, 0.5, -7.5 * mobileScaleFactor),
-            Size = UDim2.new(0, 15 * mobileScaleFactor, 0, 15 * mobileScaleFactor), Parent = tabObj.buttonFrame
-        })
+        tabObj.iconImg = makeFlowUIIcon(
+            tabObj.buttonFrame,
+            tabConfig.Icon,
+            getFlowUISubTextColor(sectionObj.Library):Lerp(flowUIPalette.TextSoft, 0.45),
+            UDim2.new(0, 10, 0.5, -7.5 * mobileScaleFactor),
+            UDim2.new(0, 15 * mobileScaleFactor, 0, 15 * mobileScaleFactor)
+        )
         
-        tabObj.nameLabel = makeThingExist("TextLabel", {
-            FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.SemiBold),
-            TextColor3 = Color3.fromRGB(89, 89, 89), Text = tabConfig.Name, BackgroundTransparency = 1,
-            Position = UDim2.new(0, 30, 0.5, -8.5 * mobileScaleFactor), TextSize = 13.8 * mobileScaleFactor,
-            Size = UDim2.new(0, 108 * mobileScaleFactor, 0, 17 * mobileScaleFactor),
-            TextXAlignment = Enum.TextXAlignment.Left, TextTruncate = Enum.TextTruncate.AtEnd,
-            ClipsDescendants = true, Parent = tabObj.buttonFrame
-        })
+        tabObj.nameLabel = makeFlowUILabel(
+            tabObj.buttonFrame,
+            sectionObj.Library,
+            tabConfig.Name,
+            UDim2.new(0, 30, 0.5, -8.5 * mobileScaleFactor),
+            UDim2.new(0, 108 * mobileScaleFactor, 0, 17 * mobileScaleFactor),
+            {
+                TextColor = getFlowUISubTextColor(sectionObj.Library):Lerp(flowUIPalette.TextSoft, 0.45),
+                TextSize = 13.8 * mobileScaleFactor,
+                TextTruncate = Enum.TextTruncate.AtEnd,
+                ClipsDescendants = true
+            }
+        )
         
         local tabClickButton = makeThingExist("TextButton", {Text = "", BackgroundTransparency = 1, Size = UDim2.new(1, 0, 1, 0), Parent = tabObj.buttonFrame})
         
@@ -4757,7 +5007,7 @@ function superMegaAwesomeLibrary:CreateSection(config)
             tabObj.contentScroll.Position = UDim2.new(0, 14 * mobileScaleFactor, 0, 4)
             tabObj.contentScroll.Visible = true
             smoothMoveGoWoosh(tabObj.contentScroll, {Position = UDim2.new(0, 4, 0, 4)}, 0.26, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-            smoothMoveGoWoosh(tabObj.buttonFrame, {BackgroundTransparency = 0}, 0.22)
+            smoothMoveGoWoosh(tabObj.buttonFrame, {BackgroundColor3 = sectionObj.Library.config.AccentColor, BackgroundTransparency = 0}, 0.22)
             smoothMoveGoWoosh(tabObj.iconImg, {ImageColor3 = Color3.new(1, 1, 1)}, 0.22)
             smoothMoveGoWoosh(tabObj.nameLabel, {TextColor3 = Color3.new(1, 1, 1)}, 0.22)
             sectionObj.Library.tabNameLabel.Text = tabConfig.Name
@@ -4787,22 +5037,24 @@ function superMegaAwesomeLibrary:CreateSection(config)
                     end
                 end)
             end
-            smoothMoveGoWoosh(tabObj.buttonFrame, {BackgroundTransparency = 1}, 0.18)
-            smoothMoveGoWoosh(tabObj.iconImg, {ImageColor3 = Color3.fromRGB(89, 89, 89)}, 0.18)
-            smoothMoveGoWoosh(tabObj.nameLabel, {TextColor3 = Color3.fromRGB(89, 89, 89)}, 0.18)
+            smoothMoveGoWoosh(tabObj.buttonFrame, {BackgroundColor3 = flowUIPalette.SurfaceSoft, BackgroundTransparency = 0.38}, 0.18)
+            smoothMoveGoWoosh(tabObj.iconImg, {ImageColor3 = sectionObj.Library.config.SubTextColor or flowUIPalette.TextSoft}, 0.18)
+            smoothMoveGoWoosh(tabObj.nameLabel, {TextColor3 = sectionObj.Library.config.SubTextColor or flowUIPalette.TextSoft}, 0.18)
         end
         
         tabClickButton.MouseButton1Click:Connect(function() if not tabObj.isActive then tabObj:Activate() end end)
         tabClickButton.MouseEnter:Connect(function()
             if not tabObj.isActive then
-                smoothMoveGoWoosh(tabObj.nameLabel, {TextColor3 = Color3.fromRGB(150, 150, 150)}, 0.2)
-                smoothMoveGoWoosh(tabObj.iconImg, {ImageColor3 = Color3.fromRGB(150, 150, 150)}, 0.2)
+                smoothMoveGoWoosh(tabObj.buttonFrame, {BackgroundColor3 = flowUIPalette.SurfaceHover, BackgroundTransparency = 0.18}, 0.2)
+                smoothMoveGoWoosh(tabObj.nameLabel, {TextColor3 = flowUIPalette.TextMuted}, 0.2)
+                smoothMoveGoWoosh(tabObj.iconImg, {ImageColor3 = flowUIPalette.TextMuted}, 0.2)
             end
         end)
         tabClickButton.MouseLeave:Connect(function()
             if not tabObj.isActive then
-                smoothMoveGoWoosh(tabObj.nameLabel, {TextColor3 = Color3.fromRGB(89, 89, 89)}, 0.2)
-                smoothMoveGoWoosh(tabObj.iconImg, {ImageColor3 = Color3.fromRGB(89, 89, 89)}, 0.2)
+                smoothMoveGoWoosh(tabObj.buttonFrame, {BackgroundColor3 = flowUIPalette.SurfaceSoft, BackgroundTransparency = 0.38}, 0.2)
+                smoothMoveGoWoosh(tabObj.nameLabel, {TextColor3 = sectionObj.Library.config.SubTextColor or flowUIPalette.TextSoft}, 0.2)
+                smoothMoveGoWoosh(tabObj.iconImg, {ImageColor3 = sectionObj.Library.config.SubTextColor or flowUIPalette.TextSoft}, 0.2)
             end
         end)
 
@@ -4837,31 +5089,39 @@ function superMegaAwesomeLibrary:CreateSection(config)
             local parentColumn = groupObj.side == "Left" and tabObj.leftColumnFrame or tabObj.rightColumnFrame
             local groupWidth = 262 * mobileScaleFactor
             
-            groupObj.mainFrame = makeThingExist("Frame", {
-                BackgroundColor3 = Color3.fromRGB(18, 18, 18), Position = UDim2.new(0, 1, 0, 1),
-                Size = UDim2.new(0, groupWidth, 0, 54 * mobileScaleFactor),
-                ClipsDescendants = true, Parent = parentColumn
-            })
+            groupObj.mainFrame = makeFlowUISurfaceFrame(
+                parentColumn,
+                flowUIPalette.Surface,
+                UDim2.new(0, 1, 0, 1),
+                UDim2.new(0, groupWidth, 0, 54 * mobileScaleFactor),
+                {
+                    ClipsDescendants = true,
+                    CornerRadius = UDim.new(0, 11),
+                    StrokeColor = flowUIPalette.Stroke,
+                    StrokeGradient = true
+                }
+            )
             
-            local groupStrokeThing = makeThingExist("UIStroke", {Color = Color3.fromRGB(33, 33, 33), Parent = groupObj.mainFrame})
-            makeThingExist("UIGradient", {
-                Color = ColorSequence.new({ColorSequenceKeypoint.new(0, Color3.new(1,1,1)), ColorSequenceKeypoint.new(0.5, Color3.fromRGB(150,150,150)), ColorSequenceKeypoint.new(1, Color3.new(1,1,1))}),
-                Rotation = 260, Parent = groupStrokeThing
-            })
-            makeThingExist("UICorner", {CornerRadius = UDim.new(0, 11), Parent = groupObj.mainFrame})
+            makeFlowUIIcon(
+                groupObj.mainFrame,
+                groupConfig.Icon,
+                getFlowUISubTextColor(groupObj.Library),
+                UDim2.new(0, 10, 0, 10 * mobileScaleFactor),
+                UDim2.new(0, 17 * mobileScaleFactor, 0, 17 * mobileScaleFactor)
+            )
             
-            makeThingExist("ImageLabel", {
-                Image = groupConfig.Icon, BackgroundTransparency = 1, Position = UDim2.new(0, 10, 0, 10 * mobileScaleFactor),
-                Size = UDim2.new(0, 17 * mobileScaleFactor, 0, 17 * mobileScaleFactor), Parent = groupObj.mainFrame
-            })
-            
-            makeThingExist("TextLabel", {
-                FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.SemiBold),
-                TextColor3 = Color3.new(1, 1, 1), Text = groupConfig.Name, BackgroundTransparency = 1,
-                Position = UDim2.new(0, 33, 0, 8 * mobileScaleFactor), TextSize = 15.6 * mobileScaleFactor,
-                Size = UDim2.new(0, 215 * mobileScaleFactor, 0, 16 * mobileScaleFactor), TextXAlignment = Enum.TextXAlignment.Left,
-                TextTruncate = Enum.TextTruncate.AtEnd, Parent = groupObj.mainFrame
-            })
+            makeFlowUILabel(
+                groupObj.mainFrame,
+                groupObj.Library,
+                groupConfig.Name,
+                UDim2.new(0, 33, 0, 8 * mobileScaleFactor),
+                UDim2.new(0, 215 * mobileScaleFactor, 0, 16 * mobileScaleFactor),
+                {
+                    TextColor = getFlowUITextColor(groupObj.Library),
+                    TextSize = 15.6 * mobileScaleFactor,
+                    TextTruncate = Enum.TextTruncate.AtEnd
+                }
+            )
             
             local function updateGroupSizeYay()
                 local newHeight = groupObj.elementYPos + 12 * mobileScaleFactor
@@ -4881,24 +5141,27 @@ function superMegaAwesomeLibrary:CreateSection(config)
                 toggleObj.value = toggleConfig.Default
                 local yPosition = groupObj.elementYPos
                 
-                toggleObj.labelText = makeThingExist("TextLabel", {
-                    FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.SemiBold),
-                    TextColor3 = Color3.fromRGB(124, 124, 124), Text = toggleConfig.Name, BackgroundTransparency = 1,
-                    Position = UDim2.new(0, 10, 0, yPosition), TextSize = 14.6 * mobileScaleFactor,
-                    Size = UDim2.new(0, 195 * mobileScaleFactor, 0, 20 * mobileScaleFactor),
-                    TextXAlignment = Enum.TextXAlignment.Left, TextTruncate = Enum.TextTruncate.AtEnd,
-                    Parent = groupObj.mainFrame
-                })
+                toggleObj.labelText = makeFlowUILabel(
+                    groupObj.mainFrame,
+                    groupObj.Library,
+                    toggleConfig.Name,
+                    UDim2.new(0, 10, 0, yPosition),
+                    UDim2.new(0, 195 * mobileScaleFactor, 0, 20 * mobileScaleFactor),
+                    {
+                        TextSize = 14.6 * mobileScaleFactor,
+                        TextTruncate = Enum.TextTruncate.AtEnd
+                    }
+                )
                 
                 toggleObj.switchFrame = makeThingExist("Frame", {
-                    BackgroundColor3 = toggleObj.value and groupObj.Library.config.AccentColor or Color3.fromRGB(32, 32, 32),
+                    BackgroundColor3 = toggleObj.value and groupObj.Library.config.AccentColor or flowUIPalette.ToggleOff,
                     Position = UDim2.new(1, -44 * mobileScaleFactor, 0, yPosition),
                     Size = UDim2.new(0, 36 * mobileScaleFactor, 0, 22 * mobileScaleFactor), Parent = groupObj.mainFrame
                 })
                 makeThingExist("UICorner", {CornerRadius = UDim.new(1, 0), Parent = toggleObj.switchFrame})
                 
                 toggleObj.circleFrame = makeThingExist("Frame", {
-                    BackgroundColor3 = toggleObj.value and Color3.new(1, 1, 1) or Color3.fromRGB(75, 75, 75),
+                    BackgroundColor3 = toggleObj.value and Color3.new(1, 1, 1) or flowUIPalette.ToggleKnobOff,
                     Position = toggleObj.value and UDim2.new(0.462, 0, 0.143, 0) or UDim2.new(0.0104, 0, 0.143, 0),
                     Size = UDim2.new(0, 16 * mobileScaleFactor, 0, 16 * mobileScaleFactor), Parent = toggleObj.switchFrame
                 })
@@ -4912,8 +5175,8 @@ function superMegaAwesomeLibrary:CreateSection(config)
                         smoothMoveGoWoosh(toggleObj.switchFrame, {BackgroundColor3 = groupObj.Library.config.AccentColor}, 0.2)
                         smoothMoveGoWoosh(toggleObj.circleFrame, {Position = UDim2.new(0.462, 0, 0.143, 0), BackgroundColor3 = Color3.new(1, 1, 1)}, 0.2, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
                     else
-                        smoothMoveGoWoosh(toggleObj.switchFrame, {BackgroundColor3 = Color3.fromRGB(32, 32, 32)}, 0.2)
-                        smoothMoveGoWoosh(toggleObj.circleFrame, {Position = UDim2.new(0.0104, 0, 0.143, 0), BackgroundColor3 = Color3.fromRGB(75, 75, 75)}, 0.2, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+                        smoothMoveGoWoosh(toggleObj.switchFrame, {BackgroundColor3 = flowUIPalette.ToggleOff}, 0.2)
+                        smoothMoveGoWoosh(toggleObj.circleFrame, {Position = UDim2.new(0.0104, 0, 0.143, 0), BackgroundColor3 = flowUIPalette.ToggleKnobOff}, 0.2, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
                     end
                     if not silent then
                         toggleConfig.Callback(toggleObj.value)
@@ -4986,14 +5249,17 @@ function superMegaAwesomeLibrary:CreateSection(config)
                 local sliderKnobHeight = 18 * mobileScaleFactor
                 local sliderKnobHalfWidth = sliderKnobWidth * 0.5
                 
-                sliderObj.labelText = makeThingExist("TextLabel", {
-                    FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.SemiBold),
-                    TextColor3 = Color3.fromRGB(118, 118, 130), Text = sliderConfig.Name, BackgroundTransparency = 1,
-                    Position = UDim2.new(0, 10, 0, yPosition), TextSize = 14.2 * mobileScaleFactor,
-                    Size = UDim2.new(0, sliderWidth - valueLabelWidth - 10 * mobileScaleFactor, 0, 19 * mobileScaleFactor),
-                    TextXAlignment = Enum.TextXAlignment.Left, TextTruncate = Enum.TextTruncate.AtEnd,
-                    Parent = groupObj.mainFrame
-                })
+                sliderObj.labelText = makeFlowUILabel(
+                    groupObj.mainFrame,
+                    groupObj.Library,
+                    sliderConfig.Name,
+                    UDim2.new(0, 10, 0, yPosition),
+                    UDim2.new(0, sliderWidth - valueLabelWidth - 10 * mobileScaleFactor, 0, 19 * mobileScaleFactor),
+                    {
+                        TextSize = 14.2 * mobileScaleFactor,
+                        TextTruncate = Enum.TextTruncate.AtEnd
+                    }
+                )
                 
                 sliderObj.backgroundFrame = makeThingExist("Frame", {
                     BackgroundTransparency = 1,
@@ -5003,7 +5269,7 @@ function superMegaAwesomeLibrary:CreateSection(config)
                 })
 
                 sliderObj.trackFrame = makeThingExist("Frame", {
-                    BackgroundColor3 = Color3.fromRGB(43, 43, 51),
+                    BackgroundColor3 = flowUIPalette.SliderTrack,
                     BorderSizePixel = 0,
                     Position = UDim2.new(0, 0, 0.5, -sliderTrackHeight * 0.5),
                     Size = UDim2.new(0, sliderWidth, 0, sliderTrackHeight),
@@ -5031,18 +5297,23 @@ function superMegaAwesomeLibrary:CreateSection(config)
                 })
                 makeThingExist("UICorner", {CornerRadius = UDim.new(0, 2 * mobileScaleFactor), Parent = sliderObj.knobFrame})
                 makeThingExist("UIStroke", {
-                    Color = Color3.fromRGB(196, 196, 204),
+                    Color = flowUIPalette.StrokeStrong,
                     Thickness = 1,
                     Parent = sliderObj.knobFrame
                 })
                 
-                sliderObj.valueLabelText = makeThingExist("TextLabel", {
-                    FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.SemiBold),
-                    TextColor3 = Color3.fromRGB(184, 184, 194), Text = formatDisplayValue(sliderObj.value),
-                    BackgroundTransparency = 1, Position = UDim2.new(1, -valueLabelWidth - 10 * mobileScaleFactor, 0, yPosition),
-                    TextSize = 14.2 * mobileScaleFactor, Size = UDim2.new(0, valueLabelWidth, 0, 19 * mobileScaleFactor),
-                    TextXAlignment = Enum.TextXAlignment.Right, Parent = groupObj.mainFrame
-                })
+                sliderObj.valueLabelText = makeFlowUILabel(
+                    groupObj.mainFrame,
+                    groupObj.Library,
+                    formatDisplayValue(sliderObj.value),
+                    UDim2.new(1, -valueLabelWidth - 10 * mobileScaleFactor, 0, yPosition),
+                    UDim2.new(0, valueLabelWidth, 0, 19 * mobileScaleFactor),
+                    {
+                        TextColor = flowUIPalette.FieldText,
+                        TextSize = 14.2 * mobileScaleFactor,
+                        TextXAlignment = Enum.TextXAlignment.Right
+                    }
+                )
                 
                 local sliderClickButton = makeThingExist("TextButton", {Text = "", BackgroundTransparency = 1, Size = UDim2.new(1, 0, 1, 0), Parent = sliderObj.backgroundFrame})
 
@@ -5132,44 +5403,47 @@ function superMegaAwesomeLibrary:CreateSection(config)
                 local yPosition = groupObj.elementYPos
                 local buttonWidth = 238 * mobileScaleFactor
                 
-                buttonObj.mainFrame = makeThingExist("Frame", {
-                    BackgroundColor3 = buttonObj.isLocked and Color3.fromRGB(24, 24, 24) or Color3.fromRGB(32, 32, 32),
-                    Position = UDim2.new(0, 10, 0, yPosition),
-                    Size = UDim2.new(0, buttonWidth, 0, 28 * mobileScaleFactor), Parent = groupObj.mainFrame
-                })
-                makeThingExist("UICorner", {CornerRadius = UDim.new(0, 6), Parent = buttonObj.mainFrame})
-                
-                local buttonStrokeThing = makeThingExist("UIStroke", {Color = buttonObj.isLocked and Color3.fromRGB(32, 32, 32) or Color3.fromRGB(48, 48, 48), Parent = buttonObj.mainFrame})
-                makeThingExist("UIGradient", {
-                    Color = ColorSequence.new({ColorSequenceKeypoint.new(0, Color3.new(1,1,1)), ColorSequenceKeypoint.new(0.5, Color3.fromRGB(150,150,150)), ColorSequenceKeypoint.new(1, Color3.new(1,1,1))}),
-                    Rotation = 260, Parent = buttonStrokeThing
-                })
+                buttonObj.mainFrame, buttonObj.strokeThing = makeFlowUISurfaceFrame(
+                    groupObj.mainFrame,
+                    buttonObj.isLocked and flowUIPalette.SurfaceAlt or flowUIPalette.Button,
+                    UDim2.new(0, 10, 0, yPosition),
+                    UDim2.new(0, buttonWidth, 0, 28 * mobileScaleFactor),
+                    {
+                        CornerRadius = UDim.new(0, 6),
+                        StrokeColor = buttonObj.isLocked and flowUIPalette.Stroke or flowUIPalette.StrokeStrong,
+                        StrokeGradient = true
+                    }
+                )
                 
                 local textXPos = 8
                 if buttonConfig.Icon then
-                    makeThingExist("ImageLabel", {
-                        ImageColor3 = buttonObj.isLocked and Color3.fromRGB(50, 50, 50) or Color3.fromRGB(125, 125, 125),
-                        Image = buttonConfig.Icon, BackgroundTransparency = 1,
-                        Position = UDim2.new(0, 8, 0.5, -8 * mobileScaleFactor),
-                        Size = UDim2.new(0, 16 * mobileScaleFactor, 0, 16 * mobileScaleFactor), Parent = buttonObj.mainFrame
-                    })
+                    makeFlowUIIcon(
+                        buttonObj.mainFrame,
+                        buttonConfig.Icon,
+                        buttonObj.isLocked and flowUIPalette.TextSoft or getFlowUISubTextColor(groupObj.Library),
+                        UDim2.new(0, 8, 0.5, -8 * mobileScaleFactor),
+                        UDim2.new(0, 16 * mobileScaleFactor, 0, 16 * mobileScaleFactor)
+                    )
                     textXPos = 30
                 end
                 
-                buttonObj.labelText = makeThingExist("TextLabel", {
-                    FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.SemiBold),
-                    TextColor3 = buttonObj.isLocked and Color3.fromRGB(46, 46, 46) or Color3.fromRGB(120, 120, 120),
-                    Text = buttonConfig.Name .. (buttonObj.isLocked and " (locked)" or ""), BackgroundTransparency = 1,
-                    Position = UDim2.new(0, textXPos * mobileScaleFactor, 0, 0), TextSize = 14 * mobileScaleFactor,
-                    Size = UDim2.new(1, -textXPos * mobileScaleFactor - 10, 1, 0),
-                    TextXAlignment = Enum.TextXAlignment.Left, TextTruncate = Enum.TextTruncate.AtEnd,
-                    Parent = buttonObj.mainFrame
-                })
+                buttonObj.labelText = makeFlowUILabel(
+                    buttonObj.mainFrame,
+                    groupObj.Library,
+                    buttonConfig.Name .. (buttonObj.isLocked and " (locked)" or ""),
+                    UDim2.new(0, textXPos * mobileScaleFactor, 0, 0),
+                    UDim2.new(1, -textXPos * mobileScaleFactor - 10, 1, 0),
+                    {
+                        TextColor = buttonObj.isLocked and flowUIPalette.TextSoft or getFlowUISubTextColor(groupObj.Library),
+                        TextSize = 14 * mobileScaleFactor,
+                        TextTruncate = Enum.TextTruncate.AtEnd
+                    }
+                )
                 
                 local buttonClickButton = makeThingExist("TextButton", {Text = "", BackgroundTransparency = 1, Size = UDim2.new(1, 0, 1, 0), Parent = buttonObj.mainFrame})
                 buttonClickButton.MouseButton1Click:Connect(function() if not buttonObj.isLocked then buttonConfig.Callback() end end)
-                buttonClickButton.MouseEnter:Connect(function() if not buttonObj.isLocked then smoothMoveGoWoosh(buttonObj.mainFrame, {BackgroundColor3 = Color3.fromRGB(40, 40, 40)}, 0.2) end end)
-                buttonClickButton.MouseLeave:Connect(function() if not buttonObj.isLocked then smoothMoveGoWoosh(buttonObj.mainFrame, {BackgroundColor3 = Color3.fromRGB(32, 32, 32)}, 0.2) end end)
+                buttonClickButton.MouseEnter:Connect(function() if not buttonObj.isLocked then smoothMoveGoWoosh(buttonObj.mainFrame, {BackgroundColor3 = flowUIPalette.ButtonHover}, 0.2) end end)
+                buttonClickButton.MouseLeave:Connect(function() if not buttonObj.isLocked then smoothMoveGoWoosh(buttonObj.mainFrame, {BackgroundColor3 = flowUIPalette.Button}, 0.2) end end)
                 
                 groupObj.elementYPos = groupObj.elementYPos + 35 * mobileScaleFactor
                 updateGroupSizeYay()
@@ -5792,58 +6066,87 @@ function superMegaAwesomeLibrary:CreateSection(config)
                 end
                 local yPosition = groupObj.elementYPos
                 
-                dropdownObj.labelText = makeThingExist("TextLabel", {
-                    FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.SemiBold),
-                    TextColor3 = Color3.fromRGB(124, 124, 124), Text = dropdownConfig.Name, BackgroundTransparency = 1,
-                    Position = UDim2.new(0, 10, 0, yPosition), TextSize = 13.8 * mobileScaleFactor,
-                    Size = UDim2.new(0, 130 * mobileScaleFactor, 0, 20 * mobileScaleFactor),
-                    TextXAlignment = Enum.TextXAlignment.Left, TextTruncate = Enum.TextTruncate.AtEnd, Parent = groupObj.mainFrame
-                })
+                dropdownObj.labelText = makeFlowUILabel(
+                    groupObj.mainFrame,
+                    groupObj.Library,
+                    dropdownConfig.Name,
+                    UDim2.new(0, 10, 0, yPosition),
+                    UDim2.new(0, 130 * mobileScaleFactor, 0, 20 * mobileScaleFactor),
+                    {
+                        TextSize = 13.8 * mobileScaleFactor,
+                        TextTruncate = Enum.TextTruncate.AtEnd
+                    }
+                )
                 
                 local displayText = tostring(dropdownObj.value or "None")
-                local buttonWidth = math.max(70 * mobileScaleFactor, howWideIsThisText(displayText, 12 * mobileScaleFactor) + 30 * mobileScaleFactor)
+                local buttonWidth = math.clamp(howWideIsThisText(displayText, 12 * mobileScaleFactor) + 30 * mobileScaleFactor, 84 * mobileScaleFactor, 112 * mobileScaleFactor)
                 
-                dropdownObj.buttonFrame = makeThingExist("Frame", {
-                    BackgroundColor3 = Color3.fromRGB(32, 32, 32), Position = UDim2.new(1, -buttonWidth - 10, 0, yPosition),
-                    Size = UDim2.new(0, buttonWidth, 0, 23 * mobileScaleFactor), Parent = groupObj.mainFrame
-                })
-                makeThingExist("UICorner", {CornerRadius = UDim.new(1, 0), Parent = dropdownObj.buttonFrame})
+                dropdownObj.buttonFrame, dropdownObj.strokeThing = makeFlowUISurfaceFrame(
+                    groupObj.mainFrame,
+                    flowUIPalette.Button,
+                    UDim2.new(1, -buttonWidth - 10, 0, yPosition),
+                    UDim2.new(0, buttonWidth, 0, 23 * mobileScaleFactor),
+                    {
+                        CornerRadius = UDim.new(1, 0),
+                        StrokeColor = flowUIPalette.Stroke
+                    }
+                )
                 
-                local dropdownStrokeThing = makeThingExist("UIStroke", {Color = Color3.fromRGB(44, 44, 44), Parent = dropdownObj.buttonFrame})
+                local dropdownStrokeThing = dropdownObj.strokeThing
                 
-                dropdownObj.selectedLabelText = makeThingExist("TextLabel", {
-                    FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.SemiBold),
-                    TextColor3 = Color3.fromRGB(84, 84, 84), Text = displayText, BackgroundTransparency = 1,
-                    Position = UDim2.new(0, 8, 0, 0), TextSize = 12.8 * mobileScaleFactor,
-                    Size = UDim2.new(1, -28 * mobileScaleFactor, 1, 0), TextXAlignment = Enum.TextXAlignment.Left,
-                    TextTruncate = Enum.TextTruncate.AtEnd, Parent = dropdownObj.buttonFrame
-                })
+                dropdownObj.selectedLabelText = makeFlowUILabel(
+                    dropdownObj.buttonFrame,
+                    groupObj.Library,
+                    displayText,
+                    UDim2.new(0, 8, 0, 0),
+                    UDim2.new(1, -28 * mobileScaleFactor, 1, 0),
+                    {
+                        TextColor = flowUIPalette.FieldText,
+                        TextSize = 12.8 * mobileScaleFactor,
+                        TextTruncate = Enum.TextTruncate.AtEnd
+                    }
+                )
                 
-                dropdownObj.arrowImg = makeThingExist("ImageLabel", {
-                    ImageColor3 = Color3.fromRGB(80, 80, 80), Image = "rbxassetid://111626678408582", BackgroundTransparency = 1,
-                    Position = UDim2.new(1, -20 * mobileScaleFactor, 0.5, -7.5 * mobileScaleFactor),
-                    Size = UDim2.new(0, 15 * mobileScaleFactor, 0, 15 * mobileScaleFactor), Parent = dropdownObj.buttonFrame
-                })
+                dropdownObj.arrowImg = makeFlowUIIcon(
+                    dropdownObj.buttonFrame,
+                    "rbxassetid://111626678408582",
+                    getFlowUISubTextColor(groupObj.Library):Lerp(flowUIPalette.TextSoft, 0.45),
+                    UDim2.new(1, -20 * mobileScaleFactor, 0.5, -7.5 * mobileScaleFactor),
+                    UDim2.new(0, 15 * mobileScaleFactor, 0, 15 * mobileScaleFactor)
+                )
                 
-                dropdownObj.optionHolderFrame = makeThingExist("Frame", {
-                    BackgroundColor3 = Color3.fromRGB(16, 16, 16), Size = UDim2.new(0, 140 * mobileScaleFactor, 0, 0),
-                    ClipsDescendants = true, Visible = false, ZIndex = 9999, Parent = groupObj.Library.dropdownHolderRef
-                })
-                makeThingExist("UICorner", {CornerRadius = UDim.new(0, 6), Parent = dropdownObj.optionHolderFrame})
-                makeThingExist("UIStroke", {Color = Color3.fromRGB(40, 40, 40), Parent = dropdownObj.optionHolderFrame})
+                dropdownObj.optionHolderFrame = makeFlowUISurfaceFrame(
+                    groupObj.Library.dropdownHolderRef,
+                    flowUIPalette.SurfaceOverlay,
+                    UDim2.new(0, 0, 0, 0),
+                    UDim2.new(0, 152 * mobileScaleFactor, 0, 0),
+                    {
+                        ClipsDescendants = true,
+                        CornerRadius = UDim.new(0, 6),
+                        StrokeColor = flowUIPalette.Stroke,
+                        ZIndex = 9999
+                    }
+                )
+                dropdownObj.optionHolderFrame.Visible = false
                 
-                makeThingExist("TextLabel", {
-                    FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.SemiBold),
-                    TextColor3 = Color3.new(1, 1, 1), Text = dropdownConfig.Name, BackgroundTransparency = 1,
-                    Position = UDim2.new(0, 12, 0, 8 * mobileScaleFactor), TextSize = 14 * mobileScaleFactor,
-                    Size = UDim2.new(1, -44 * mobileScaleFactor, 0, 20 * mobileScaleFactor), TextXAlignment = Enum.TextXAlignment.Left,
-                    TextTruncate = Enum.TextTruncate.AtEnd, ZIndex = 10000, Parent = dropdownObj.optionHolderFrame
-                })
+                makeFlowUILabel(
+                    dropdownObj.optionHolderFrame,
+                    groupObj.Library,
+                    dropdownConfig.Name,
+                    UDim2.new(0, 12, 0, 8 * mobileScaleFactor),
+                    UDim2.new(1, -44 * mobileScaleFactor, 0, 20 * mobileScaleFactor),
+                    {
+                        TextColor = getFlowUITextColor(groupObj.Library),
+                        TextSize = 14 * mobileScaleFactor,
+                        TextTruncate = Enum.TextTruncate.AtEnd,
+                        ZIndex = 10000
+                    }
+                )
 
                 local dropdownCloseButton = makeThingExist("TextButton", {
                     FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Bold),
-                    Text = "X", TextColor3 = Color3.fromRGB(170, 170, 170), TextSize = 14 * mobileScaleFactor,
-                    BackgroundColor3 = Color3.fromRGB(24, 24, 24), AutoButtonColor = false,
+                    Text = "X", TextColor3 = flowUIPalette.TextMuted, TextSize = 14 * mobileScaleFactor,
+                    BackgroundColor3 = flowUIPalette.SurfaceSoft, AutoButtonColor = false,
                     Position = UDim2.new(1, -25 * mobileScaleFactor, 0, 5 * mobileScaleFactor),
                     Size = UDim2.new(0, 18 * mobileScaleFactor, 0, 18 * mobileScaleFactor),
                     ZIndex = 10002, Parent = dropdownObj.optionHolderFrame
@@ -5871,6 +6174,7 @@ function superMegaAwesomeLibrary:CreateSection(config)
                     ZIndex = 10000, Parent = dropdownObj.optionScrollFrame
                 })
                 
+                local dropdownPopupWidth = 152 * mobileScaleFactor
                 local maxDropdownHeight = 200 * mobileScaleFactor
                 local dropdownPositionUpdateConn = nil
 
@@ -5881,17 +6185,17 @@ function superMegaAwesomeLibrary:CreateSection(config)
                         dropdownPositionUpdateConn = nil
                     end
                     if isInstant then
-                        dropdownObj.optionHolderFrame.Size = UDim2.new(0, 140 * mobileScaleFactor, 0, 0)
+                        dropdownObj.optionHolderFrame.Size = UDim2.new(0, dropdownPopupWidth, 0, 0)
                         dropdownObj.optionHolderFrame.Visible = false
                         dropdownObj.arrowImg.Rotation = 0
-                        dropdownObj.buttonFrame.BackgroundColor3 = Color3.fromRGB(32, 32, 32)
-                        dropdownStrokeThing.Color = Color3.fromRGB(44, 44, 44)
+                        dropdownObj.buttonFrame.BackgroundColor3 = flowUIPalette.Button
+                        dropdownStrokeThing.Color = flowUIPalette.Stroke
                         return
                     end
-                    smoothMoveGoWoosh(dropdownObj.optionHolderFrame, {Size = UDim2.new(0, 140 * mobileScaleFactor, 0, 0)}, 0.22, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
+                    smoothMoveGoWoosh(dropdownObj.optionHolderFrame, {Size = UDim2.new(0, dropdownPopupWidth, 0, 0)}, 0.22, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
                     smoothMoveGoWoosh(dropdownObj.arrowImg, {Rotation = 0}, 0.2)
-                    smoothMoveGoWoosh(dropdownObj.buttonFrame, {BackgroundColor3 = Color3.fromRGB(32, 32, 32)}, 0.18)
-                    smoothMoveGoWoosh(dropdownStrokeThing, {Color = Color3.fromRGB(44, 44, 44)}, 0.18)
+                    smoothMoveGoWoosh(dropdownObj.buttonFrame, {BackgroundColor3 = flowUIPalette.Button}, 0.18)
+                    smoothMoveGoWoosh(dropdownStrokeThing, {Color = flowUIPalette.Stroke}, 0.18)
                     task.delay(0.22, function()
                         if dropdownObj.optionHolderFrame.Parent and not dropdownObj.isOpen then
                             dropdownObj.optionHolderFrame.Visible = false
@@ -5903,10 +6207,10 @@ function superMegaAwesomeLibrary:CreateSection(config)
                     closeDropdown(false)
                 end)
                 dropdownCloseButton.MouseEnter:Connect(function()
-                    smoothMoveGoWoosh(dropdownCloseButton, {BackgroundColor3 = Color3.fromRGB(44, 44, 44), TextColor3 = Color3.fromRGB(220, 220, 220)}, 0.12)
+                    smoothMoveGoWoosh(dropdownCloseButton, {BackgroundColor3 = flowUIPalette.SurfaceHover, TextColor3 = flowUIPalette.Text}, 0.12)
                 end)
                 dropdownCloseButton.MouseLeave:Connect(function()
-                    smoothMoveGoWoosh(dropdownCloseButton, {BackgroundColor3 = Color3.fromRGB(24, 24, 24), TextColor3 = Color3.fromRGB(138, 138, 138)}, 0.12)
+                    smoothMoveGoWoosh(dropdownCloseButton, {BackgroundColor3 = flowUIPalette.SurfaceSoft, TextColor3 = flowUIPalette.TextMuted}, 0.12)
                 end)
                 
                 local function createOptionsYay()
@@ -5918,7 +6222,7 @@ function superMegaAwesomeLibrary:CreateSection(config)
                         local isSelected = dropdownObj.value == option
                         local optionLabelText = makeThingExist("TextLabel", {
                             FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.SemiBold),
-                            TextColor3 = isSelected and groupObj.Library.config.AccentColor or Color3.fromRGB(124, 124, 124),
+                            TextColor3 = isSelected and groupObj.Library.config.AccentColor or (groupObj.Library.config.SubTextColor or flowUIPalette.TextMuted),
                             Text = tostring(option), BackgroundTransparency = 1, Position = UDim2.new(0, 12, 0, optY),
                             TextSize = 14 * mobileScaleFactor, Size = UDim2.new(1, -24, 0, 18 * mobileScaleFactor),
                             TextXAlignment = Enum.TextXAlignment.Left, TextTruncate = Enum.TextTruncate.AtEnd,
@@ -5933,13 +6237,13 @@ function superMegaAwesomeLibrary:CreateSection(config)
                             closeDropdown(false)
                             local optionText = tostring(option)
                             dropdownObj.selectedLabelText.Text = optionText
-                            local newWidth = math.max(70 * mobileScaleFactor, howWideIsThisText(optionText, 12 * mobileScaleFactor) + 30 * mobileScaleFactor)
+                            local newWidth = math.clamp(howWideIsThisText(optionText, 12 * mobileScaleFactor) + 30 * mobileScaleFactor, 84 * mobileScaleFactor, 112 * mobileScaleFactor)
                             smoothMoveGoWoosh(dropdownObj.buttonFrame, {Size = UDim2.new(0, newWidth, 0, 21 * mobileScaleFactor), Position = UDim2.new(1, -newWidth - 10, 0, yPosition)}, 0.15)
                             createOptionsYay()
                             dropdownConfig.Callback(option)
                         end)
-                        optionClickButton.MouseEnter:Connect(function() if dropdownObj.value ~= option then smoothMoveGoWoosh(optionLabelText, {TextColor3 = Color3.fromRGB(180, 180, 180)}, 0.2) end end)
-                        optionClickButton.MouseLeave:Connect(function() if dropdownObj.value ~= option then smoothMoveGoWoosh(optionLabelText, {TextColor3 = Color3.fromRGB(124, 124, 124)}, 0.2) end end)
+                        optionClickButton.MouseEnter:Connect(function() if dropdownObj.value ~= option then smoothMoveGoWoosh(optionLabelText, {TextColor3 = flowUIPalette.TextMuted}, 0.2) end end)
+                        optionClickButton.MouseLeave:Connect(function() if dropdownObj.value ~= option then smoothMoveGoWoosh(optionLabelText, {TextColor3 = groupObj.Library.config.SubTextColor or flowUIPalette.TextMuted}, 0.2) end end)
                         optY = optY + 22 * mobileScaleFactor
                     end
                     dropdownObj.optionContainerFrame.Size = UDim2.new(1, -6, 0, optY)
@@ -5949,20 +6253,28 @@ function superMegaAwesomeLibrary:CreateSection(config)
                 
                 local dropdownClickButton = makeThingExist("TextButton", {Text = "", BackgroundTransparency = 1, Size = UDim2.new(1, 0, 1, 0), Parent = dropdownObj.buttonFrame})
                 
-                local function updateDropdownPositionYay()
+                local function updateDropdownPositionYay(openHeight)
                     local buttonAbsPos = dropdownObj.buttonFrame.AbsolutePosition
                     local buttonAbsSize = dropdownObj.buttonFrame.AbsoluteSize
-                    dropdownObj.optionHolderFrame.Position = UDim2.new(0, buttonAbsPos.X, 0, buttonAbsPos.Y + buttonAbsSize.Y + 5)
+                    local viewportWidth = groupObj.Library._cachedViewportWidth or 1280
+                    local viewportHeight = groupObj.Library._cachedViewportHeight or 720
+                    local popupHeight = tonumber(openHeight) or dropdownObj.optionHolderFrame.AbsoluteSize.Y
+                    local xPos = math.clamp(buttonAbsPos.X + buttonAbsSize.X - dropdownPopupWidth, 8, math.max(8, viewportWidth - dropdownPopupWidth - 8))
+                    local yPos = buttonAbsPos.Y + buttonAbsSize.Y + 6
+                    if popupHeight > 0 and yPos + popupHeight > viewportHeight - 8 then
+                        yPos = math.max(8, buttonAbsPos.Y - popupHeight - 6)
+                    end
+                    dropdownObj.optionHolderFrame.Position = UDim2.new(0, xPos, 0, yPos)
                 end
                 
                 dropdownClickButton.MouseButton1Click:Connect(function()
                     dropdownObj.isOpen = not dropdownObj.isOpen
                     if dropdownObj.isOpen then
-                        updateDropdownPositionYay()
-                        dropdownObj.optionHolderFrame.Visible = true
                         local contentHeight = (35 + (#dropdownConfig.Options * 22)) * mobileScaleFactor
                         local height = math.min(contentHeight, maxDropdownHeight)
-                        smoothMoveGoWoosh(dropdownObj.optionHolderFrame, {Size = UDim2.new(0, 140 * mobileScaleFactor, 0, height)}, 0.28, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+                        updateDropdownPositionYay(height)
+                        dropdownObj.optionHolderFrame.Visible = true
+                        smoothMoveGoWoosh(dropdownObj.optionHolderFrame, {Size = UDim2.new(0, dropdownPopupWidth, 0, height)}, 0.28, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
                         smoothMoveGoWoosh(dropdownObj.arrowImg, {Rotation = 180}, 0.24, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
                         if dropdownPositionUpdateConn then dropdownPositionUpdateConn() end
                         dropdownPositionUpdateConn = startFloatingPositionTracker(groupObj.Library, dropdownObj.buttonFrame, function()
@@ -5976,13 +6288,13 @@ function superMegaAwesomeLibrary:CreateSection(config)
                 end)
                 
                 dropdownClickButton.MouseEnter:Connect(function()
-                    smoothMoveGoWoosh(dropdownObj.buttonFrame, {BackgroundColor3 = Color3.fromRGB(48, 48, 48)}, 0.2)
-                    smoothMoveGoWoosh(dropdownStrokeThing, {Color = Color3.fromRGB(83, 83, 83)}, 0.2)
+                    smoothMoveGoWoosh(dropdownObj.buttonFrame, {BackgroundColor3 = flowUIPalette.ButtonHover}, 0.2)
+                    smoothMoveGoWoosh(dropdownStrokeThing, {Color = flowUIPalette.StrokeStrong}, 0.2)
                 end)
                 dropdownClickButton.MouseLeave:Connect(function()
                     if not dropdownObj.isOpen then
-                        smoothMoveGoWoosh(dropdownObj.buttonFrame, {BackgroundColor3 = Color3.fromRGB(32, 32, 32)}, 0.2)
-                        smoothMoveGoWoosh(dropdownStrokeThing, {Color = Color3.fromRGB(44, 44, 44)}, 0.2)
+                        smoothMoveGoWoosh(dropdownObj.buttonFrame, {BackgroundColor3 = flowUIPalette.Button}, 0.2)
+                        smoothMoveGoWoosh(dropdownStrokeThing, {Color = flowUIPalette.Stroke}, 0.2)
                     end
                 end)
                 
@@ -5991,7 +6303,7 @@ function superMegaAwesomeLibrary:CreateSection(config)
                     dropdownObj.value = value
                     local displayValue = tostring(value)
                     dropdownObj.selectedLabelText.Text = displayValue
-                    local newWidth = math.max(70 * mobileScaleFactor, howWideIsThisText(displayValue, 12 * mobileScaleFactor) + 30 * mobileScaleFactor)
+                    local newWidth = math.clamp(howWideIsThisText(displayValue, 12 * mobileScaleFactor) + 30 * mobileScaleFactor, 84 * mobileScaleFactor, 112 * mobileScaleFactor)
                     dropdownObj.buttonFrame.Size = UDim2.new(0, newWidth, 0, 21 * mobileScaleFactor)
                     dropdownObj.buttonFrame.Position = UDim2.new(1, -newWidth - 10, 0, yPosition)
                     createOptionsYay()
@@ -6019,7 +6331,7 @@ function superMegaAwesomeLibrary:CreateSection(config)
                     end
                     local displayValue = tostring(dropdownObj.value or "None")
                     dropdownObj.selectedLabelText.Text = displayValue
-                    local newWidth = math.max(70 * mobileScaleFactor, howWideIsThisText(displayValue, 12 * mobileScaleFactor) + 30 * mobileScaleFactor)
+                    local newWidth = math.clamp(howWideIsThisText(displayValue, 12 * mobileScaleFactor) + 30 * mobileScaleFactor, 84 * mobileScaleFactor, 112 * mobileScaleFactor)
                     dropdownObj.buttonFrame.Size = UDim2.new(0, newWidth, 0, 21 * mobileScaleFactor)
                     dropdownObj.buttonFrame.Position = UDim2.new(1, -newWidth - 10, 0, yPosition)
                     createOptionsYay()
@@ -6106,13 +6418,16 @@ function superMegaAwesomeLibrary:CreateSection(config)
                 end
                 local yPosition = groupObj.elementYPos
                 
-                multiDropdownObj.labelText = makeThingExist("TextLabel", {
-                    FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.SemiBold),
-                    TextColor3 = Color3.fromRGB(124, 124, 124), Text = multiDropdownConfig.Name, BackgroundTransparency = 1,
-                    Position = UDim2.new(0, 10, 0, yPosition), TextSize = 14 * mobileScaleFactor,
-                    Size = UDim2.new(0, 100 * mobileScaleFactor, 0, 20 * mobileScaleFactor),
-                    TextXAlignment = Enum.TextXAlignment.Left, Parent = groupObj.mainFrame
-                })
+                multiDropdownObj.labelText = makeFlowUILabel(
+                    groupObj.mainFrame,
+                    groupObj.Library,
+                    multiDropdownConfig.Name,
+                    UDim2.new(0, 10, 0, yPosition),
+                    UDim2.new(0, 100 * mobileScaleFactor, 0, 20 * mobileScaleFactor),
+                    {
+                        TextSize = 14 * mobileScaleFactor
+                    }
+                )
                 
                 local function getDisplayText()
                     local selected = {}
@@ -6140,49 +6455,74 @@ function superMegaAwesomeLibrary:CreateSection(config)
                 end
                 
                 local displayText = getDisplayText()
-                local buttonWidth = math.max(85 * mobileScaleFactor, howWideIsThisText(displayText, 12 * mobileScaleFactor) + 35 * mobileScaleFactor)
+                local buttonWidth = math.clamp(howWideIsThisText(displayText, 12 * mobileScaleFactor) + 35 * mobileScaleFactor, 92 * mobileScaleFactor, 122 * mobileScaleFactor)
                 
-                multiDropdownObj.buttonFrame = makeThingExist("Frame", {
-                    BackgroundColor3 = Color3.fromRGB(32, 32, 32), Position = UDim2.new(1, -buttonWidth - 10, 0, yPosition),
-                    Size = UDim2.new(0, buttonWidth, 0, 21 * mobileScaleFactor), Parent = groupObj.mainFrame
-                })
-                makeThingExist("UICorner", {CornerRadius = UDim.new(1, 0), Parent = multiDropdownObj.buttonFrame})
+                multiDropdownObj.buttonFrame, multiDropdownObj.strokeThing = makeFlowUISurfaceFrame(
+                    groupObj.mainFrame,
+                    flowUIPalette.Button,
+                    UDim2.new(1, -buttonWidth - 10, 0, yPosition),
+                    UDim2.new(0, buttonWidth, 0, 21 * mobileScaleFactor),
+                    {
+                        CornerRadius = UDim.new(1, 0),
+                        StrokeColor = flowUIPalette.Stroke
+                    }
+                )
                 
-                local dropdownStrokeThing = makeThingExist("UIStroke", {Color = Color3.fromRGB(44, 44, 44), Parent = multiDropdownObj.buttonFrame})
+                local dropdownStrokeThing = multiDropdownObj.strokeThing
                 
-                multiDropdownObj.selectedLabelText = makeThingExist("TextLabel", {
-                    FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.SemiBold),
-                    TextColor3 = Color3.fromRGB(84, 84, 84), Text = displayText, BackgroundTransparency = 1,
-                    Position = UDim2.new(0, 8, 0, 0), TextSize = 12 * mobileScaleFactor,
-                    Size = UDim2.new(1, -28 * mobileScaleFactor, 1, 0), TextXAlignment = Enum.TextXAlignment.Left,
-                    TextTruncate = Enum.TextTruncate.AtEnd, Parent = multiDropdownObj.buttonFrame
-                })
+                multiDropdownObj.selectedLabelText = makeFlowUILabel(
+                    multiDropdownObj.buttonFrame,
+                    groupObj.Library,
+                    displayText,
+                    UDim2.new(0, 8, 0, 0),
+                    UDim2.new(1, -28 * mobileScaleFactor, 1, 0),
+                    {
+                        TextColor = flowUIPalette.FieldText,
+                        TextSize = 12 * mobileScaleFactor,
+                        TextTruncate = Enum.TextTruncate.AtEnd
+                    }
+                )
                 
-                multiDropdownObj.arrowImg = makeThingExist("ImageLabel", {
-                    ImageColor3 = Color3.fromRGB(80, 80, 80), Image = "rbxassetid://111626678408582", BackgroundTransparency = 1,
-                    Position = UDim2.new(1, -20 * mobileScaleFactor, 0.5, -7 * mobileScaleFactor),
-                    Size = UDim2.new(0, 14 * mobileScaleFactor, 0, 14 * mobileScaleFactor), Parent = multiDropdownObj.buttonFrame
-                })
+                multiDropdownObj.arrowImg = makeFlowUIIcon(
+                    multiDropdownObj.buttonFrame,
+                    "rbxassetid://111626678408582",
+                    getFlowUISubTextColor(groupObj.Library):Lerp(flowUIPalette.TextSoft, 0.45),
+                    UDim2.new(1, -20 * mobileScaleFactor, 0.5, -7 * mobileScaleFactor),
+                    UDim2.new(0, 14 * mobileScaleFactor, 0, 14 * mobileScaleFactor)
+                )
                 
-                multiDropdownObj.optionHolderFrame = makeThingExist("Frame", {
-                    BackgroundColor3 = Color3.fromRGB(16, 16, 16), Size = UDim2.new(0, 160 * mobileScaleFactor, 0, 0),
-                    ClipsDescendants = true, Visible = false, ZIndex = 9999, Parent = groupObj.Library.dropdownHolderRef
-                })
-                makeThingExist("UICorner", {CornerRadius = UDim.new(0, 6), Parent = multiDropdownObj.optionHolderFrame})
-                makeThingExist("UIStroke", {Color = Color3.fromRGB(40, 40, 40), Parent = multiDropdownObj.optionHolderFrame})
+                multiDropdownObj.optionHolderFrame = makeFlowUISurfaceFrame(
+                    groupObj.Library.dropdownHolderRef,
+                    flowUIPalette.SurfaceOverlay,
+                    UDim2.new(0, 0, 0, 0),
+                    UDim2.new(0, 176 * mobileScaleFactor, 0, 0),
+                    {
+                        ClipsDescendants = true,
+                        CornerRadius = UDim.new(0, 6),
+                        StrokeColor = flowUIPalette.Stroke,
+                        ZIndex = 9999
+                    }
+                )
+                multiDropdownObj.optionHolderFrame.Visible = false
                 
-                makeThingExist("TextLabel", {
-                    FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.SemiBold),
-                    TextColor3 = Color3.new(1, 1, 1), Text = multiDropdownConfig.Name, BackgroundTransparency = 1,
-                    Position = UDim2.new(0, 12, 0, 8 * mobileScaleFactor), TextSize = 14 * mobileScaleFactor,
-                    Size = UDim2.new(1, -44 * mobileScaleFactor, 0, 20 * mobileScaleFactor), TextXAlignment = Enum.TextXAlignment.Left,
-                    TextTruncate = Enum.TextTruncate.AtEnd, ZIndex = 10000, Parent = multiDropdownObj.optionHolderFrame
-                })
+                makeFlowUILabel(
+                    multiDropdownObj.optionHolderFrame,
+                    groupObj.Library,
+                    multiDropdownConfig.Name,
+                    UDim2.new(0, 12, 0, 8 * mobileScaleFactor),
+                    UDim2.new(1, -44 * mobileScaleFactor, 0, 20 * mobileScaleFactor),
+                    {
+                        TextColor = getFlowUITextColor(groupObj.Library),
+                        TextSize = 14 * mobileScaleFactor,
+                        TextTruncate = Enum.TextTruncate.AtEnd,
+                        ZIndex = 10000
+                    }
+                )
 
                 local multiDropdownCloseButton = makeThingExist("TextButton", {
                     FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Bold),
-                    Text = "X", TextColor3 = Color3.fromRGB(170, 170, 170), TextSize = 14 * mobileScaleFactor,
-                    BackgroundColor3 = Color3.fromRGB(24, 24, 24), AutoButtonColor = false,
+                    Text = "X", TextColor3 = flowUIPalette.TextMuted, TextSize = 14 * mobileScaleFactor,
+                    BackgroundColor3 = flowUIPalette.SurfaceSoft, AutoButtonColor = false,
                     Position = UDim2.new(1, -25 * mobileScaleFactor, 0, 5 * mobileScaleFactor),
                     Size = UDim2.new(0, 18 * mobileScaleFactor, 0, 18 * mobileScaleFactor),
                     ZIndex = 10002, Parent = multiDropdownObj.optionHolderFrame
@@ -6210,6 +6550,7 @@ function superMegaAwesomeLibrary:CreateSection(config)
                     ZIndex = 10000, Parent = multiDropdownObj.optionScrollFrame
                 })
                 
+                local multiDropdownPopupWidth = 176 * mobileScaleFactor
                 local maxMultiDropdownHeight = 220 * mobileScaleFactor
                 local multiDropdownPositionConn = nil
 
@@ -6220,17 +6561,17 @@ function superMegaAwesomeLibrary:CreateSection(config)
                         multiDropdownPositionConn = nil
                     end
                     if isInstant then
-                        multiDropdownObj.optionHolderFrame.Size = UDim2.new(0, 160 * mobileScaleFactor, 0, 0)
+                        multiDropdownObj.optionHolderFrame.Size = UDim2.new(0, multiDropdownPopupWidth, 0, 0)
                         multiDropdownObj.optionHolderFrame.Visible = false
                         multiDropdownObj.arrowImg.Rotation = 0
-                        multiDropdownObj.buttonFrame.BackgroundColor3 = Color3.fromRGB(32, 32, 32)
-                        dropdownStrokeThing.Color = Color3.fromRGB(44, 44, 44)
+                        multiDropdownObj.buttonFrame.BackgroundColor3 = flowUIPalette.Button
+                        dropdownStrokeThing.Color = flowUIPalette.Stroke
                         return
                     end
-                    smoothMoveGoWoosh(multiDropdownObj.optionHolderFrame, {Size = UDim2.new(0, 160 * mobileScaleFactor, 0, 0)}, 0.22, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
+                    smoothMoveGoWoosh(multiDropdownObj.optionHolderFrame, {Size = UDim2.new(0, multiDropdownPopupWidth, 0, 0)}, 0.22, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
                     smoothMoveGoWoosh(multiDropdownObj.arrowImg, {Rotation = 0}, 0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
-                    smoothMoveGoWoosh(multiDropdownObj.buttonFrame, {BackgroundColor3 = Color3.fromRGB(32, 32, 32)}, 0.18)
-                    smoothMoveGoWoosh(dropdownStrokeThing, {Color = Color3.fromRGB(44, 44, 44)}, 0.18)
+                    smoothMoveGoWoosh(multiDropdownObj.buttonFrame, {BackgroundColor3 = flowUIPalette.Button}, 0.18)
+                    smoothMoveGoWoosh(dropdownStrokeThing, {Color = flowUIPalette.Stroke}, 0.18)
                     task.delay(0.22, function()
                         if multiDropdownObj.optionHolderFrame.Parent and not multiDropdownObj.isOpen then
                             multiDropdownObj.optionHolderFrame.Visible = false
@@ -6242,10 +6583,10 @@ function superMegaAwesomeLibrary:CreateSection(config)
                     closeMultiDropdown(false)
                 end)
                 multiDropdownCloseButton.MouseEnter:Connect(function()
-                    smoothMoveGoWoosh(multiDropdownCloseButton, {BackgroundColor3 = Color3.fromRGB(44, 44, 44), TextColor3 = Color3.fromRGB(220, 220, 220)}, 0.12)
+                    smoothMoveGoWoosh(multiDropdownCloseButton, {BackgroundColor3 = flowUIPalette.SurfaceHover, TextColor3 = flowUIPalette.Text}, 0.12)
                 end)
                 multiDropdownCloseButton.MouseLeave:Connect(function()
-                    smoothMoveGoWoosh(multiDropdownCloseButton, {BackgroundColor3 = Color3.fromRGB(24, 24, 24), TextColor3 = Color3.fromRGB(138, 138, 138)}, 0.12)
+                    smoothMoveGoWoosh(multiDropdownCloseButton, {BackgroundColor3 = flowUIPalette.SurfaceSoft, TextColor3 = flowUIPalette.TextMuted}, 0.12)
                 end)
 
                 local function createMultiOptionsYay()
@@ -6263,7 +6604,7 @@ function superMegaAwesomeLibrary:CreateSection(config)
                         })
                         
                         local checkboxFrame = makeThingExist("Frame", {
-                            BackgroundColor3 = isSelected and groupObj.Library.config.AccentColor or Color3.fromRGB(32, 32, 32),
+                            BackgroundColor3 = isSelected and groupObj.Library.config.AccentColor or flowUIPalette.Button,
                             Position = UDim2.new(0, 12, 0.5, -8 * mobileScaleFactor),
                             Size = UDim2.new(0, 16 * mobileScaleFactor, 0, 16 * mobileScaleFactor),
                             ZIndex = 10002, Parent = optionFrame
@@ -6278,13 +6619,18 @@ function superMegaAwesomeLibrary:CreateSection(config)
                             ZIndex = 10003, Parent = checkboxFrame
                         })
                         
-                        local optionLabelText = makeThingExist("TextLabel", {
-                            FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.SemiBold),
-                            TextColor3 = isSelected and groupObj.Library.config.AccentColor or Color3.fromRGB(124, 124, 124),
-                            Text = tostring(option), BackgroundTransparency = 1, Position = UDim2.new(0, 34, 0, 0),
-                            TextSize = 14 * mobileScaleFactor, Size = UDim2.new(1, -46, 1, 0),
-                            TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 10002, Parent = optionFrame
-                        })
+                        local optionLabelText = makeFlowUILabel(
+                            optionFrame,
+                            groupObj.Library,
+                            tostring(option),
+                            UDim2.new(0, 34, 0, 0),
+                            UDim2.new(1, -46, 1, 0),
+                            {
+                                TextColor = isSelected and groupObj.Library.config.AccentColor or getFlowUISubTextColor(groupObj.Library),
+                                TextSize = 14 * mobileScaleFactor,
+                                ZIndex = 10002
+                            }
+                        )
                         
                         local optionClickButton = makeThingExist("TextButton", {
                             Text = "", BackgroundTransparency = 1, Size = UDim2.new(1, 0, 1, 0),
@@ -6295,13 +6641,13 @@ function superMegaAwesomeLibrary:CreateSection(config)
                             multiDropdownObj.selectedValues[option] = not multiDropdownObj.selectedValues[option]
                             local nowSelected = multiDropdownObj.selectedValues[option]
                             
-                            smoothMoveGoWoosh(checkboxFrame, {BackgroundColor3 = nowSelected and groupObj.Library.config.AccentColor or Color3.fromRGB(32, 32, 32)}, 0.15)
+                            smoothMoveGoWoosh(checkboxFrame, {BackgroundColor3 = nowSelected and groupObj.Library.config.AccentColor or flowUIPalette.Button}, 0.15)
                             smoothMoveGoWoosh(checkmarkImg, {ImageTransparency = nowSelected and 0 or 1}, 0.15)
-                            smoothMoveGoWoosh(optionLabelText, {TextColor3 = nowSelected and groupObj.Library.config.AccentColor or Color3.fromRGB(124, 124, 124)}, 0.15)
+                            smoothMoveGoWoosh(optionLabelText, {TextColor3 = nowSelected and groupObj.Library.config.AccentColor or getFlowUISubTextColor(groupObj.Library)}, 0.15)
                             
                             local newDisplayText = getDisplayText()
                             multiDropdownObj.selectedLabelText.Text = newDisplayText
-                            local newWidth = math.max(85 * mobileScaleFactor, howWideIsThisText(newDisplayText, 12 * mobileScaleFactor) + 35 * mobileScaleFactor)
+                            local newWidth = math.clamp(howWideIsThisText(newDisplayText, 12 * mobileScaleFactor) + 35 * mobileScaleFactor, 92 * mobileScaleFactor, 122 * mobileScaleFactor)
                             smoothMoveGoWoosh(multiDropdownObj.buttonFrame, {Size = UDim2.new(0, newWidth, 0, 21 * mobileScaleFactor), Position = UDim2.new(1, -newWidth - 10, 0, yPosition)}, 0.15)
                             
                             multiDropdownConfig.Callback(getSelectedArray())
@@ -6309,14 +6655,14 @@ function superMegaAwesomeLibrary:CreateSection(config)
                         
                         optionClickButton.MouseEnter:Connect(function()
                             if not multiDropdownObj.selectedValues[option] then
-                                smoothMoveGoWoosh(optionLabelText, {TextColor3 = Color3.fromRGB(180, 180, 180)}, 0.15)
-                                smoothMoveGoWoosh(checkboxFrame, {BackgroundColor3 = Color3.fromRGB(48, 48, 48)}, 0.15)
+                                smoothMoveGoWoosh(optionLabelText, {TextColor3 = flowUIPalette.TextMuted}, 0.15)
+                                smoothMoveGoWoosh(checkboxFrame, {BackgroundColor3 = flowUIPalette.ButtonHover}, 0.15)
                             end
                         end)
                         optionClickButton.MouseLeave:Connect(function()
                             if not multiDropdownObj.selectedValues[option] then
-                                smoothMoveGoWoosh(optionLabelText, {TextColor3 = Color3.fromRGB(124, 124, 124)}, 0.15)
-                                smoothMoveGoWoosh(checkboxFrame, {BackgroundColor3 = Color3.fromRGB(32, 32, 32)}, 0.15)
+                                smoothMoveGoWoosh(optionLabelText, {TextColor3 = getFlowUISubTextColor(groupObj.Library)}, 0.15)
+                                smoothMoveGoWoosh(checkboxFrame, {BackgroundColor3 = flowUIPalette.Button}, 0.15)
                             end
                         end)
                         
@@ -6329,20 +6675,28 @@ function superMegaAwesomeLibrary:CreateSection(config)
                 
                 local dropdownClickButton = makeThingExist("TextButton", {Text = "", BackgroundTransparency = 1, Size = UDim2.new(1, 0, 1, 0), Parent = multiDropdownObj.buttonFrame})
                 
-                local function updateDropdownPositionYay()
+                local function updateDropdownPositionYay(openHeight)
                     local buttonAbsPos = multiDropdownObj.buttonFrame.AbsolutePosition
                     local buttonAbsSize = multiDropdownObj.buttonFrame.AbsoluteSize
-                    multiDropdownObj.optionHolderFrame.Position = UDim2.new(0, buttonAbsPos.X, 0, buttonAbsPos.Y + buttonAbsSize.Y + 5)
+                    local viewportWidth = groupObj.Library._cachedViewportWidth or 1280
+                    local viewportHeight = groupObj.Library._cachedViewportHeight or 720
+                    local popupHeight = tonumber(openHeight) or multiDropdownObj.optionHolderFrame.AbsoluteSize.Y
+                    local xPos = math.clamp(buttonAbsPos.X + buttonAbsSize.X - multiDropdownPopupWidth, 8, math.max(8, viewportWidth - multiDropdownPopupWidth - 8))
+                    local yPos = buttonAbsPos.Y + buttonAbsSize.Y + 6
+                    if popupHeight > 0 and yPos + popupHeight > viewportHeight - 8 then
+                        yPos = math.max(8, buttonAbsPos.Y - popupHeight - 6)
+                    end
+                    multiDropdownObj.optionHolderFrame.Position = UDim2.new(0, xPos, 0, yPos)
                 end
                 
                 dropdownClickButton.MouseButton1Click:Connect(function()
                     multiDropdownObj.isOpen = not multiDropdownObj.isOpen
                     if multiDropdownObj.isOpen then
-                        updateDropdownPositionYay()
-                        multiDropdownObj.optionHolderFrame.Visible = true
                         local contentHeight = (38 + (#multiDropdownConfig.Options * 24)) * mobileScaleFactor
                         local height = math.min(contentHeight, maxMultiDropdownHeight)
-                        smoothMoveGoWoosh(multiDropdownObj.optionHolderFrame, {Size = UDim2.new(0, 160 * mobileScaleFactor, 0, height)}, 0.28, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+                        updateDropdownPositionYay(height)
+                        multiDropdownObj.optionHolderFrame.Visible = true
+                        smoothMoveGoWoosh(multiDropdownObj.optionHolderFrame, {Size = UDim2.new(0, multiDropdownPopupWidth, 0, height)}, 0.28, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
                         smoothMoveGoWoosh(multiDropdownObj.arrowImg, {Rotation = 180}, 0.24, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
                         if multiDropdownPositionConn then multiDropdownPositionConn() end
                         multiDropdownPositionConn = startFloatingPositionTracker(groupObj.Library, multiDropdownObj.buttonFrame, function()
@@ -6356,13 +6710,13 @@ function superMegaAwesomeLibrary:CreateSection(config)
                 end)
                 
                 dropdownClickButton.MouseEnter:Connect(function()
-                    smoothMoveGoWoosh(multiDropdownObj.buttonFrame, {BackgroundColor3 = Color3.fromRGB(48, 48, 48)}, 0.2)
-                    smoothMoveGoWoosh(dropdownStrokeThing, {Color = Color3.fromRGB(83, 83, 83)}, 0.2)
+                    smoothMoveGoWoosh(multiDropdownObj.buttonFrame, {BackgroundColor3 = flowUIPalette.ButtonHover}, 0.2)
+                    smoothMoveGoWoosh(dropdownStrokeThing, {Color = flowUIPalette.StrokeStrong}, 0.2)
                 end)
                 dropdownClickButton.MouseLeave:Connect(function()
                     if not multiDropdownObj.isOpen then
-                        smoothMoveGoWoosh(multiDropdownObj.buttonFrame, {BackgroundColor3 = Color3.fromRGB(32, 32, 32)}, 0.2)
-                        smoothMoveGoWoosh(dropdownStrokeThing, {Color = Color3.fromRGB(44, 44, 44)}, 0.2)
+                        smoothMoveGoWoosh(multiDropdownObj.buttonFrame, {BackgroundColor3 = flowUIPalette.Button}, 0.2)
+                        smoothMoveGoWoosh(dropdownStrokeThing, {Color = flowUIPalette.Stroke}, 0.2)
                     end
                 end)
                 
@@ -6378,7 +6732,7 @@ function superMegaAwesomeLibrary:CreateSection(config)
                     end
                     local newDisplayText = getDisplayText()
                     multiDropdownObj.selectedLabelText.Text = newDisplayText
-                    local newWidth = math.max(85 * mobileScaleFactor, howWideIsThisText(newDisplayText, 12 * mobileScaleFactor) + 35 * mobileScaleFactor)
+                    local newWidth = math.clamp(howWideIsThisText(newDisplayText, 12 * mobileScaleFactor) + 35 * mobileScaleFactor, 92 * mobileScaleFactor, 122 * mobileScaleFactor)
                     multiDropdownObj.buttonFrame.Size = UDim2.new(0, newWidth, 0, 21 * mobileScaleFactor)
                     multiDropdownObj.buttonFrame.Position = UDim2.new(1, -newWidth - 10, 0, yPosition)
                     createMultiOptionsYay()
@@ -6406,7 +6760,7 @@ function superMegaAwesomeLibrary:CreateSection(config)
                     multiDropdownObj.selectedValues = filteredSelectedValues
                     local newDisplayText = getDisplayText()
                     multiDropdownObj.selectedLabelText.Text = newDisplayText
-                    local newWidth = math.max(85 * mobileScaleFactor, howWideIsThisText(newDisplayText, 12 * mobileScaleFactor) + 35 * mobileScaleFactor)
+                    local newWidth = math.clamp(howWideIsThisText(newDisplayText, 12 * mobileScaleFactor) + 35 * mobileScaleFactor, 92 * mobileScaleFactor, 122 * mobileScaleFactor)
                     multiDropdownObj.buttonFrame.Size = UDim2.new(0, newWidth, 0, 21 * mobileScaleFactor)
                     multiDropdownObj.buttonFrame.Position = UDim2.new(1, -newWidth - 10, 0, yPosition)
                     createMultiOptionsYay()
@@ -6515,29 +6869,34 @@ function superMegaAwesomeLibrary:CreateSection(config)
                 textInputObj.Name = textInputConfig.Name
                 local yPosition = groupObj.elementYPos
                 
-                textInputObj.labelText = makeThingExist("TextLabel", {
-                    FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.SemiBold),
-                    TextColor3 = Color3.fromRGB(124, 124, 124), Text = textInputConfig.Name, BackgroundTransparency = 1,
-                    Position = UDim2.new(0, 10, 0, yPosition), TextSize = 14.6 * mobileScaleFactor,
-                    Size = UDim2.new(0, 80 * mobileScaleFactor, 0, 20 * mobileScaleFactor),
-                    TextXAlignment = Enum.TextXAlignment.Left, Parent = groupObj.mainFrame
-                })
+                textInputObj.labelText = makeFlowUILabel(
+                    groupObj.mainFrame,
+                    groupObj.Library,
+                    textInputConfig.Name,
+                    UDim2.new(0, 10, 0, yPosition),
+                    UDim2.new(0, 80 * mobileScaleFactor, 0, 20 * mobileScaleFactor),
+                    {
+                        TextSize = 14.6 * mobileScaleFactor
+                    }
+                )
                 
-                textInputObj.inputFrame = makeThingExist("Frame", {
-                    BackgroundColor3 = Color3.fromRGB(32, 32, 32),
-                    Position = UDim2.new(0, 10, 0, yPosition + 23 * mobileScaleFactor),
-                    Size = UDim2.new(0, 240 * mobileScaleFactor, 0, 28 * mobileScaleFactor),
-                    Parent = groupObj.mainFrame
-                })
-                makeThingExist("UICorner", {CornerRadius = UDim.new(0, 6), Parent = textInputObj.inputFrame})
-                makeThingExist("UIStroke", {Color = Color3.fromRGB(44, 44, 44), Parent = textInputObj.inputFrame})
+                textInputObj.inputFrame = makeFlowUISurfaceFrame(
+                    groupObj.mainFrame,
+                    flowUIPalette.Button,
+                    UDim2.new(0, 10, 0, yPosition + 23 * mobileScaleFactor),
+                    UDim2.new(0, 240 * mobileScaleFactor, 0, 28 * mobileScaleFactor),
+                    {
+                        CornerRadius = UDim.new(0, 6),
+                        StrokeColor = flowUIPalette.Stroke
+                    }
+                )
                 
                 textInputObj.textBox = makeThingExist("TextBox", {
                     FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.SemiBold),
                     PlaceholderText = textInputConfig.Placeholder,
-                    PlaceholderColor3 = Color3.fromRGB(80, 80, 80),
+                    PlaceholderColor3 = flowUIPalette.FieldPlaceholder,
                     Text = textInputConfig.Default,
-                    TextColor3 = Color3.fromRGB(200, 200, 200),
+                    TextColor3 = flowUIPalette.FieldText,
                     TextSize = 13.8 * mobileScaleFactor,
                     BackgroundTransparency = 1,
                     ClearTextOnFocus = false,
@@ -6548,11 +6907,11 @@ function superMegaAwesomeLibrary:CreateSection(config)
                 })
                 
                 textInputObj.textBox.Focused:Connect(function()
-                    smoothMoveGoWoosh(textInputObj.inputFrame, {BackgroundColor3 = Color3.fromRGB(40, 40, 40)}, 0.2)
+                    smoothMoveGoWoosh(textInputObj.inputFrame, {BackgroundColor3 = flowUIPalette.ButtonHover}, 0.2)
                 end)
                 
                 textInputObj.textBox.FocusLost:Connect(function(enterPressed)
-                    smoothMoveGoWoosh(textInputObj.inputFrame, {BackgroundColor3 = Color3.fromRGB(32, 32, 32)}, 0.2)
+                    smoothMoveGoWoosh(textInputObj.inputFrame, {BackgroundColor3 = flowUIPalette.Button}, 0.2)
                     textInputObj.value = textInputObj.textBox.Text
                     textInputConfig.Callback(textInputObj.value, enterPressed)
                 end)
@@ -7148,5 +7507,8 @@ function superMegaAwesomeLibrary:Destroy()
         rawset(sharedEnv, flowUIRuntimeInstanceKey, nil)
     end
 end
+
+local flowUIExportEnv = getFlowUISharedEnvironment()
+rawset(flowUIExportEnv, "__FLOWUI_LIBRARY_EXPORT", superMegaAwesomeLibrary)
 
 return superMegaAwesomeLibrary
