@@ -1535,27 +1535,13 @@ function superMegaAwesomeLibrary:_RefreshMobileToggleVisuals(instant)
     local accent = self.config.AccentColor or flowUIPalette.Text
     local isOpen = self.isToggledOn == true
     local isHovered = self.mobileToggleHovered == true
-    local frameColor = isOpen
-        and flowUIPalette.SurfaceSoft:Lerp(accent, isHovered and 0.18 or 0.12)
-        or (isHovered and flowUIPalette.SurfaceSoft or flowUIPalette.Surface)
-    local strokeColor = isOpen
-        and accent:Lerp(flowUIPalette.StrokeStrong, isHovered and 0.22 or 0.34)
-        or (isHovered and flowUIPalette.StrokeStrong or flowUIPalette.Stroke)
-    local avatarStrokeColor = isOpen
-        and accent:Lerp(Color3.new(1, 1, 1), isHovered and 0.1 or 0.18)
-        or (isHovered and flowUIPalette.StrokeStrong or flowUIPalette.Stroke)
-    local avatarFrameColor = isOpen
-        and flowUIPalette.Surface
-        or (isHovered and flowUIPalette.SurfaceHover or flowUIPalette.SurfaceSoft)
-    local labelColor = isOpen
-        and flowUIPalette.Text
-        or (isHovered and flowUIPalette.TextMuted or getFlowUISubTextColor(self))
-    local dotColor = isOpen and accent or (isHovered and flowUIPalette.TextMuted or flowUIPalette.TextSoft)
-    local dotSize = isOpen and (10 * mobileScaleFactor) or (8 * mobileScaleFactor)
-    local glowTransparency = isOpen and (isHovered and 0.86 or 0.9) or (isHovered and 0.91 or 0.94)
+    local frameColor = isHovered and flowUIPalette.SurfaceSoft or flowUIPalette.Surface
+    local strokeColor = isHovered and flowUIPalette.StrokeStrong or flowUIPalette.Stroke
+    local iconColor = isOpen and accent or flowUIPalette.TextMuted
+    local glowTransparency = isHovered and 0.9 or 0.94
 
     if self.mobileToggleStateLabel then
-        self.mobileToggleStateLabel.Text = isOpen and "Hide" or "Open"
+        self.mobileToggleStateLabel.Text = ""
     end
 
     if instant then
@@ -1563,18 +1549,14 @@ function superMegaAwesomeLibrary:_RefreshMobileToggleVisuals(instant)
         if self.mobileToggleStroke then
             self.mobileToggleStroke.Color = strokeColor
         end
-        if self.mobileToggleAvatarFrame then
-            self.mobileToggleAvatarFrame.BackgroundColor3 = avatarFrameColor
-        end
-        if self.mobileToggleAvatarStroke then
-            self.mobileToggleAvatarStroke.Color = avatarStrokeColor
-        end
         if self.mobileToggleStateLabel then
-            self.mobileToggleStateLabel.TextColor3 = labelColor
+            self.mobileToggleStateLabel.TextColor3 = flowUIPalette.TextMuted
         end
         if self.mobileToggleStateDot then
-            self.mobileToggleStateDot.BackgroundColor3 = dotColor
-            self.mobileToggleStateDot.Size = UDim2.new(0, dotSize, 0, dotSize)
+            self.mobileToggleStateDot.Visible = false
+        end
+        if self.mobileToggleIcon then
+            self.mobileToggleIcon.ImageColor3 = iconColor
         end
         if self.mobileToggleGlow then
             self.mobileToggleGlow.ImageColor3 = accent
@@ -1587,20 +1569,14 @@ function superMegaAwesomeLibrary:_RefreshMobileToggleVisuals(instant)
     if self.mobileToggleStroke then
         smoothMoveGoWoosh(self.mobileToggleStroke, {Color = strokeColor}, 0.18)
     end
-    if self.mobileToggleAvatarFrame then
-        smoothMoveGoWoosh(self.mobileToggleAvatarFrame, {BackgroundColor3 = avatarFrameColor}, 0.18)
-    end
-    if self.mobileToggleAvatarStroke then
-        smoothMoveGoWoosh(self.mobileToggleAvatarStroke, {Color = avatarStrokeColor}, 0.18)
-    end
     if self.mobileToggleStateLabel then
-        smoothMoveGoWoosh(self.mobileToggleStateLabel, {TextColor3 = labelColor}, 0.18)
+        smoothMoveGoWoosh(self.mobileToggleStateLabel, {TextColor3 = flowUIPalette.TextMuted}, 0.18)
     end
     if self.mobileToggleStateDot then
-        smoothMoveGoWoosh(self.mobileToggleStateDot, {
-            BackgroundColor3 = dotColor,
-            Size = UDim2.new(0, dotSize, 0, dotSize)
-        }, 0.18)
+        self.mobileToggleStateDot.Visible = false
+    end
+    if self.mobileToggleIcon then
+        smoothMoveGoWoosh(self.mobileToggleIcon, {ImageColor3 = iconColor}, 0.18)
     end
     if self.mobileToggleGlow then
         smoothMoveGoWoosh(self.mobileToggleGlow, {
@@ -3700,16 +3676,13 @@ end
 
 function superMegaAwesomeLibrary:CreateMobileToggleButton()
     local toggleScale = isMobileUserSadly and 1 or mobileScaleFactor
-    local buttonWidth = 50 * toggleScale
-    local buttonHeight = 50 * toggleScale
-    local avatarBubbleSize = 34 * toggleScale
-    local avatarIconSize = 24 * toggleScale
+    local buttonSize = 48 * toggleScale
     
     self.mobileToggleFrame, self.mobileToggleStroke = makeFlowUISurfaceFrame(
         self.screenGuiYay,
         flowUIPalette.Surface,
         UDim2.new(0.5, 0, 0, 8 * toggleScale),
-        UDim2.new(0, buttonWidth, 0, buttonHeight),
+        UDim2.new(0, buttonSize, 0, buttonSize),
         {
             CornerRadius = UDim.new(0, 14 * toggleScale),
             StrokeColor = flowUIPalette.Stroke,
@@ -3727,43 +3700,27 @@ function superMegaAwesomeLibrary:CreateMobileToggleButton()
         ImageTransparency = 0.94,
         Position = UDim2.new(0.5, 0, 0.5, 0),
         AnchorPoint = Vector2.new(0.5, 0.5),
-        Size = UDim2.new(1.45, 0, 1.45, 0),
+        Size = UDim2.new(1.25, 0, 1.25, 0),
         ZIndex = 0,
         Parent = self.mobileToggleFrame
     })
     
-    self.mobileToggleAvatarFrame, self.mobileToggleAvatarStroke = makeFlowUISurfaceFrame(
-        self.mobileToggleFrame,
-        flowUIPalette.SurfaceSoft,
-        UDim2.new(0.5, -(avatarBubbleSize * 0.5), 0.5, -(avatarBubbleSize * 0.5)),
-        UDim2.new(0, avatarBubbleSize, 0, avatarBubbleSize),
-        {
-            CornerRadius = UDim.new(0, 10 * toggleScale),
-            StrokeColor = flowUIPalette.StrokeStrong
-        }
-    )
-    
-    self.mobileToggleAvatarImg = makeThingExist("ImageLabel", {
+    self.mobileToggleIcon = makeThingExist("ImageLabel", {
         BackgroundTransparency = 1,
-        Image = flowUIBrandIconUrl,
+        Image = "rbxassetid://95109736896642",
+        ImageColor3 = self.config.AccentColor,
         Position = UDim2.new(0.5, 0, 0.5, 0),
         AnchorPoint = Vector2.new(0.5, 0.5),
-        Size = UDim2.new(0, avatarIconSize, 0, avatarIconSize),
-        Parent = self.mobileToggleAvatarFrame
-    })
-    makeThingExist("UICorner", {CornerRadius = UDim.new(0, 7 * toggleScale), Parent = self.mobileToggleAvatarImg})
-    
-    self.mobileToggleStateLabel = nil
-    
-    self.mobileToggleStateDot = makeThingExist("Frame", {
-        BackgroundColor3 = self.config.AccentColor,
-        AnchorPoint = Vector2.new(0.5, 0.5),
-        Position = UDim2.new(1, -9 * toggleScale, 1, -9 * toggleScale),
-        Size = UDim2.new(0, 7 * toggleScale, 0, 7 * toggleScale),
-        BorderSizePixel = 0,
+        Size = UDim2.new(0, 31 * toggleScale, 0, 31 * toggleScale),
+        ZIndex = 1,
         Parent = self.mobileToggleFrame
     })
-    makeThingExist("UICorner", {CornerRadius = UDim.new(1, 0), Parent = self.mobileToggleStateDot})
+    
+    self.mobileToggleStateLabel = nil
+    self.mobileToggleStateDot = nil
+    self.mobileToggleAvatarFrame = nil
+    self.mobileToggleAvatarStroke = nil
+    self.mobileToggleAvatarImg = nil
     
     local mobileToggleBtn = makeThingExist("TextButton", {
         Name = "ClickButton",
@@ -3775,9 +3732,9 @@ function superMegaAwesomeLibrary:CreateMobileToggleButton()
     
     mobileToggleBtn.MouseButton1Click:Connect(function()
         self:ToggleUI()
-        smoothMoveGoWoosh(self.mobileToggleFrame, {Size = UDim2.new(0, buttonWidth - (4 * mobileScaleFactor), 0, buttonHeight - (4 * mobileScaleFactor))}, 0.08)
+        smoothMoveGoWoosh(self.mobileToggleFrame, {Size = UDim2.new(0, buttonSize - (4 * mobileScaleFactor), 0, buttonSize - (4 * mobileScaleFactor))}, 0.08)
         task.delay(0.1, function()
-            smoothMoveGoWoosh(self.mobileToggleFrame, {Size = UDim2.new(0, buttonWidth, 0, buttonHeight)}, 0.16, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+            smoothMoveGoWoosh(self.mobileToggleFrame, {Size = UDim2.new(0, buttonSize, 0, buttonSize)}, 0.16, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
         end)
     end)
     
@@ -3859,9 +3816,8 @@ function superMegaAwesomeLibrary:CreateMainFrameYay()
     local frameHeight = 530 * mobileScaleFactor
     local headerLeftPadding = 10 * mobileScaleFactor
     local headerAvatarBaseX = 160 * mobileScaleFactor
-    local headerAvatarSize = 40 * mobileScaleFactor
-    local headerAvatarGap = 12 * mobileScaleFactor
-    local headerAvatarImageSize = headerAvatarSize - (6 * mobileScaleFactor)
+    local headerAvatarSize = 30 * mobileScaleFactor
+    local headerAvatarGap = 10 * mobileScaleFactor
     local searchWidth = 214 * mobileScaleFactor
     local searchRightPadding = 12 * mobileScaleFactor
     local contentStartX = 198 * mobileScaleFactor
@@ -3954,25 +3910,13 @@ function superMegaAwesomeLibrary:CreateMainFrameYay()
     })
     self:_SetNameHidden(self._uiVisualSettings.HideName)
     
-    self.playerAvatarFrame, self.playerAvatarFrameStroke = makeFlowUISurfaceFrame(
-        self.mainFrameYay,
-        flowUIPalette.SurfaceSoft:Lerp(self.config.AccentColor or flowUIPalette.Text, 0.08),
-        UDim2.new(0, avatarX, 0, 12 * mobileScaleFactor),
-        UDim2.new(0, headerAvatarSize, 0, headerAvatarSize),
-        {
-            CornerRadius = UDim.new(1, 0),
-            StrokeColor = (self.config.AccentColor or flowUIPalette.StrokeStrong):Lerp(flowUIPalette.StrokeStrong, 0.58),
-            StrokeThickness = 1.15
-        }
-    )
     self.playerAvatarImg = makeThingExist("ImageLabel", {
         Image = getPlayerAvatarCuzTheyreBeautiful(theOneAndOnlyPlayer.UserId),
         BackgroundTransparency = 1,
-        Position = UDim2.new(0.5, 0, 0.5, 0),
-        AnchorPoint = Vector2.new(0.5, 0.5),
-        Size = UDim2.new(0, headerAvatarImageSize, 0, headerAvatarImageSize),
+        Position = UDim2.new(0, avatarX, 0, 17 * mobileScaleFactor),
+        Size = UDim2.new(0, headerAvatarSize, 0, headerAvatarSize),
         ScaleType = Enum.ScaleType.Crop,
-        Parent = self.playerAvatarFrame
+        Parent = self.mainFrameYay
     })
     makeThingExist("UICorner", {CornerRadius = UDim.new(1, 0), Parent = self.playerAvatarImg})
     
