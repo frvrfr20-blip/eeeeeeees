@@ -21,23 +21,23 @@ local mobileScaleFactor = isMobileUserSadly and 0.7 or 1
 local defaultFlowUIFontEnum = Enum.Font.GothamSemibold
 local defaultFlowUIFontFamily = "rbxasset://fonts/families/GothamSSm.json"
 local flowUIPalette = {
-    Surface = Color3.fromRGB(15, 17, 24),
-    SurfaceAlt = Color3.fromRGB(19, 22, 30),
-    SurfaceSoft = Color3.fromRGB(24, 28, 38),
-    SurfaceHover = Color3.fromRGB(33, 37, 49),
-    SurfaceOverlay = Color3.fromRGB(17, 20, 28),
-    Stroke = Color3.fromRGB(44, 49, 64),
-    StrokeStrong = Color3.fromRGB(67, 74, 93),
-    Text = Color3.fromRGB(245, 247, 252),
-    TextMuted = Color3.fromRGB(136, 146, 168),
-    TextSoft = Color3.fromRGB(98, 109, 131),
-    FieldText = Color3.fromRGB(221, 226, 237),
-    FieldPlaceholder = Color3.fromRGB(98, 109, 132),
-    ToggleOff = Color3.fromRGB(40, 45, 57),
-    ToggleKnobOff = Color3.fromRGB(122, 130, 148),
-    SliderTrack = Color3.fromRGB(42, 47, 60),
-    Button = Color3.fromRGB(28, 32, 41),
-    ButtonHover = Color3.fromRGB(38, 43, 54)
+    Surface = Color3.fromRGB(16, 16, 16),
+    SurfaceAlt = Color3.fromRGB(18, 18, 18),
+    SurfaceSoft = Color3.fromRGB(24, 24, 24),
+    SurfaceHover = Color3.fromRGB(32, 32, 32),
+    SurfaceOverlay = Color3.fromRGB(14, 14, 14),
+    Stroke = Color3.fromRGB(40, 40, 40),
+    StrokeStrong = Color3.fromRGB(64, 64, 64),
+    Text = Color3.fromRGB(255, 255, 255),
+    TextMuted = Color3.fromRGB(124, 124, 124),
+    TextSoft = Color3.fromRGB(84, 84, 84),
+    FieldText = Color3.fromRGB(200, 200, 200),
+    FieldPlaceholder = Color3.fromRGB(80, 80, 80),
+    ToggleOff = Color3.fromRGB(32, 32, 32),
+    ToggleKnobOff = Color3.fromRGB(75, 75, 75),
+    SliderTrack = Color3.fromRGB(34, 34, 34),
+    Button = Color3.fromRGB(32, 32, 32),
+    ButtonHover = Color3.fromRGB(48, 48, 48)
 }
 local flowUIBrandIconUrl = "rbxthumb://type=Asset&id=122301554013809&w=420&h=420"
 
@@ -3844,14 +3844,15 @@ function superMegaAwesomeLibrary:CreateMainFrameYay()
         BackgroundTransparency = 0.36,
         Size = UDim2.new(1, 0, 1, 0),
         ClipsDescendants = true,
+        Visible = self._uiVisualSettings.BackgroundEffects == true,
         ZIndex = 0,
         Parent = self.mainFrameYay
     })
     self.mainBackgroundGradient = makeThingExist("UIGradient", {
         Color = ColorSequence.new({
-            ColorSequenceKeypoint.new(0, Color3.fromRGB(12, 14, 20)),
-            ColorSequenceKeypoint.new(0.52, Color3.fromRGB(21, 25, 35)),
-            ColorSequenceKeypoint.new(1, Color3.fromRGB(14, 17, 24))
+            ColorSequenceKeypoint.new(0, Color3.fromRGB(12, 12, 12)),
+            ColorSequenceKeypoint.new(0.52, Color3.fromRGB(20, 20, 20)),
+            ColorSequenceKeypoint.new(1, Color3.fromRGB(14, 14, 14))
         }),
         Rotation = 215,
         Parent = self.mainBackgroundEffectsFrame
